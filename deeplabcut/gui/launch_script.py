@@ -11,14 +11,14 @@ Licensed under GNU Lesser General Public License v3.0
 
 import wx
 from deeplabcut.gui.welcome import Welcome
-from deeplabcut.gui.create_new_project import Create_new_project
+from deeplabcut.gui.create_new_project import CreateNewProject
 
 class MainFrame(wx.Frame):
     def __init__(self):
 #        wx.Frame.__init__(self, None, title="DeepLabCut")
         displays = (wx.Display(i) for i in range(wx.Display.GetCount())) # Gets the number of displays
         screenSizes = [display.GetGeometry().GetSize() for display in displays] # Gets the size of each display
-        index = 0 # For display 1.
+        index = 0 # For display Last
         screenWidth = screenSizes[index][0]
         screenHeight = screenSizes[index][1]
         self.gui_size = (screenWidth*0.7,screenHeight*0.55)
@@ -32,8 +32,8 @@ class MainFrame(wx.Frame):
         page1 = Welcome(self.nb,self.gui_size)
         self.nb.AddPage(page1, "Welcome")
 
-        page2 = Create_new_project(self.nb,self.gui_size)
-        self.nb.AddPage(page2, "Manage Project")
+        # page2 = CreateNewProject(self.nb,self.gui_size)
+        # self.nb.AddPage(page2, "Manage Project")
 
         self.sizer = wx.BoxSizer()
         self.sizer.Add(self.nb, 1, wx.EXPAND)

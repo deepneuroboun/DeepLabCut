@@ -13,6 +13,7 @@ import wx
 import wx.adv
 import os
 import deeplabcut
+from deeplabcut.gui.create_new_project import CreateNewProject
 
 media_path = os.path.join(deeplabcut.__path__[0], 'gui' , 'media')
 dlc = os.path.join(media_path,'dlc_1-01.png')
@@ -30,14 +31,33 @@ class Welcome(wx.Panel):
 ##         design the panel
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         #if editing this text make sure you add the '\n' to get the new line. The sizer is unable to format lines correctly.
-        description = "Allah belanizi versin cocuklar!\nBaciniz yok!!!\nBakalim istedigimiz sekilde mi oldu???"
+        description = "Welcome to modified version of DeepLabCut2.0!\nThis program is modified for Behavioral Neuroscience Lab.\nJust select the experimental paradigms from the options below."
 
+        self.parent = parent
+        self.gui_size = gui_size
         self.proj_name = wx.StaticText(self, label=description,style=wx.ALIGN_CENTRE)
-        main_sizer.Add(self.proj_name, proportion=1, flag=wx.EXPAND, border=10)
+        main_sizer.Add(self.proj_name, proportion=3, flag=wx.EXPAND, border=10)
+
+        # Experimental Paradigms
+        lines = [["OFT", "EPM"], ["FST", "WYM"]]
+        is_active = [[True, False],[False, False]]
+        line_sizers = [None] * len(lines)
+
+        for i, line in enumerate(lines):
+            line_sizers[i] = wx.BoxSizer(wx.HORIZONTAL)
+            control = is_active[i]
+            for j, elem in enumerate(line):
+                cur_button = wx.Button(self, label=elem, size=wx.Size(100,200))
+                cur_button.Bind(wx.EVT_BUTTON, self.goto_paradigm)
+                if(not control[j]):
+                    cur_button.Disable()
+                line_sizers[i].Add(cur_button, flag=wx.ALL, border=10)
+            main_sizer.Add(line_sizers[i], proportion=1, flag=wx.ALIGN_CENTER)
 
 
 
-        # Add image of DLC
+
+        # Add images of DLC and Boun Neuro
         icon_sizer = wx.BoxSizer(wx.HORIZONTAL)
         icon_image = wx.Image(dlc, type=wx.BITMAP_TYPE_PNG)
         boun_image = wx.Image(bounneuro, type=wx.BITMAP_TYPE_PNG)
@@ -46,15 +66,20 @@ class Welcome(wx.Panel):
         boun = wx.StaticBitmap(self, bitmap=wx.Bitmap(boun_image.Scale(boun_image.GetWidth() // self.SCALE, boun_image.GetHeight() // self.SCALE, wx.IMAGE_QUALITY_HIGH)))
 
         icon_sizer.Add(boun, proportion=1, flag=wx.EXPAND)
-        icon_sizer.Add(icon, proportion=0, flag=wx.ALIGN_RIGHT | wx.EXPAND)
+        icon_sizer.Add(icon, proportion=0)
 
         main_sizer.Add(icon_sizer, proportion=0, flag=wx.EXPAND, border=10)
 
 
 
-
-
         self.SetSizer(main_sizer)
         main_sizer.Fit(self)
+
+    def goto_paradigm(self, event):
+        cur_notebook = self.parent
+        btn = event.GetEventObject()
+        paradigm_page = CreateNewProject(cur_notebook, self.gui_size)
+        cur_notebook.AddPage(paradigm_page, btn.GetLabelText())
+        self.parent.SetSelection(1)
 
 
