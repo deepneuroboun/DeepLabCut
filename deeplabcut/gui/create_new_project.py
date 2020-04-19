@@ -17,6 +17,11 @@ from deeplabcut.utils import auxiliaryfunctions
 from deeplabcut.gui.analyze_videos import Analyze_videos
 
 media_path = os.path.join(deeplabcut.__path__[0], 'gui' , 'media')
+OFT_cfg = os.path.join(deeplabcut.__path__[0], 'paradimgs', 'OFT', 'config.yaml')
+FST_cfg = os.path.join(deeplabcut.__path__[0], 'paradimgs', 'FST', 'config.yaml')
+WYM_cfg = os.path.join(deeplabcut.__path__[0], 'paradimgs', 'WYM', 'config.yaml')
+EPM_cfg = os.path.join(deeplabcut.__path__[0], 'paradimgs', 'EPM', 'config.yaml')
+
 logo = os.path.join(media_path,'logo.png')
 class CreateNewProject(wx.Panel):
     def __init__(self, parent,gui_size):
@@ -30,7 +35,7 @@ class CreateNewProject(wx.Panel):
         self.filelist = []
         self.dir = None
         self.copy = False
-        self.cfg = None
+        self.cfg = OFT_cfg
         self.loaded = False
 
         # design the panel
@@ -48,81 +53,45 @@ class CreateNewProject(wx.Panel):
 
         # Add all the options
 
-        self.vids = wx.StaticText(self, label="Choose the videos")
+        self.vids = wx.StaticText(self, label="Choose the videos:")
         self.sizer.Add(self.vids, pos=(2, 0), flag=wx.TOP|wx.LEFT, border=10)
 
         self.sel_vids = wx.Button(self, label="Load Videos")
         self.sizer.Add(self.sel_vids, pos=(2, 1), flag=wx.TOP, border=6)
         self.sel_vids.Bind(wx.EVT_BUTTON, self.select_videos)
 
+        self.data = wx.StaticText(self, label="Choose the track data:")
+        self.sizer.Add(self.data, pos=(3,0), flag=wx.TOP|wx.LEFT, border=10)
+
+        self.sel_data = wx.Button(self, label="Load Data")
+        self.sizer.Add(self.sel_data, pos=(3,1), flag=wx.TOP, border=6)
+
 #
 
         self.help_button = wx.Button(self, label='Help')
-        self.sizer.Add(self.help_button, pos=(3, 0), flag=wx.LEFT, border=10)
+        self.sizer.Add(self.help_button, pos=(4, 0), flag=wx.LEFT, border=10)
         self.help_button.Bind(wx.EVT_BUTTON, self.help_function)
 
         self.ok = wx.Button(self, label="Ok")
-        self.sizer.Add(self.ok, pos=(3, 2))
+        self.sizer.Add(self.ok, pos=(4, 2))
         self.ok.Bind(wx.EVT_BUTTON, self.create_new_project)
 
 
         self.reset = wx.Button(self, label="Reset")
-        self.sizer.Add(self.reset, pos=(3, 1),flag=wx.BOTTOM|wx.RIGHT, border=10)
+        self.sizer.Add(self.reset, pos=(4, 1),flag=wx.BOTTOM|wx.RIGHT, border=10)
         self.reset.Bind(wx.EVT_BUTTON, self.reset_project)
 
         self.sizer.AddGrowableRow(2)
+        self.sizer.AddGrowableRow(3)
         self.sizer.AddGrowableCol(1)
 
         self.SetSizer(self.sizer)
         self.sizer.Fit(self)
 
     def help_function(self,event):
+        # TODO: change help function for DeepNeuroBoun
+        raise NotImplementedError
 
-        filepath= 'help.txt'
-        f = open(filepath, 'w')
-        sys.stdout = f
-        fnc_name = 'deeplabcut.create_new_project'
-        pydoc.help(fnc_name)
-        f.close()
-        sys.stdout = sys.__stdout__
-        help_file = open("help.txt","r+")
-        help_text = help_file.read()
-        wx.MessageBox(help_text,'Help',wx.OK | wx.ICON_INFORMATION)
-        help_file.close()
-        os.remove('help.txt')
-
-    def chooseOption(self,event):
-        if self.proj.GetStringSelection() == 'Load existing project':
-
-            if self.loaded:
-                self.sel_config.SetPath(self.cfg)
-            self.proj_name.Enable(False)
-            self.proj_name_txt_box.Enable(False)
-            self.exp.Enable(False)
-            self.exp_txt_box.Enable(False)
-            self.sel_vids.Enable(False)
-            self.change_workingdir.Enable(False)
-            self.copy_choice.Enable(False)
-            self.sel_config.Show()
-            #self.SetSizer(self.sizer)
-            #self.sizer.Add(self.sizer, pos=(3, 0), span=(1, 8),flag=wx.EXPAND|wx.BOTTOM, border=15)
-            self.sizer.Fit(self)
-        else:
-            self.proj_name.Enable(True)
-            self.proj_name_txt_box.Enable(True)
-            self.exp.Enable(True)
-            self.exp_txt_box.Enable(True)
-            self.sel_vids.Enable(True)
-            self.change_workingdir.Enable(True)
-            self.copy_choice.Enable(True)
-            if self.sel_config.IsShown():
-                self.sel_config.Hide()
-#                self.ok.Enable(False)
-#            else:
-#                self.ok.Enable(True)
-
-            self.SetSizer(self.sizer)
-            self.sizer.Fit(self)
 
 
     def select_videos(self,event):
@@ -156,15 +125,9 @@ class CreateNewProject(wx.Panel):
         """
         Finally create the new project
         """
-        if self.sel_config.IsShown():
-            self.cfg = self.sel_config.GetPath()
-            if self.cfg == "":
-                wx.MessageBox('Please choose the config.yaml file to load the project', 'Error', wx.OK | wx.ICON_ERROR)
-                self.loaded = False
-            else:
-                wx.MessageBox('Project Loaded!', 'Info', wx.OK | wx.ICON_INFORMATION)
-                self.loaded = True
-                self.edit_config_file.Enable(True)
+        wx.MessageBox('Project Loaded!', 'Info', wx.OK | wx.ICON_INFORMATION)
+        self.loaded = True
+        self.edit_config_file.Enable(True)
         else:
             self.task = self.proj_name_txt_box.GetValue()
             self.scorer = self.exp_txt_box.GetValue()
@@ -192,29 +155,5 @@ class CreateNewProject(wx.Panel):
             self.parent.AddPage(page8, "Analyze videos")
 
     def reset_project(self,event):
-        self.loaded=False
-        if self.sel_config.IsShown():
-            self.sel_config.SetPath("")
-            self.proj.SetSelection(0)
-            self.sel_config.Hide()
-
-        self.sel_config.SetPath("")
-        self.proj_name_txt_box.SetValue("")
-        self.exp_txt_box.SetValue("")
-        self.filelist = []
-        self.sel_vids.SetLabel("Load Videos")
-        self.dir = os.getcwd()
-        self.edit_config_file.Enable(False)
-        self.proj_name.Enable(True)
-        self.proj_name_txt_box.Enable(True)
-        self.exp.Enable(True)
-        self.exp_txt_box.Enable(True)
-        self.sel_vids.Enable(True)
-        self.change_workingdir.Enable(True)
-        self.copy_choice.Enable(True)
-        self.copy_choice.SetValue(False)
-        try:
-            self.change_wd.SetValue(False)
-        except:
-            pass
-        self.sel_wd.Enable(False)
+        # TODO : Resetting makes the videos disappear and reload all the stuff
+        raise NotImplementedError
