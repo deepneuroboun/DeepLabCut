@@ -107,3 +107,6 @@ ENV/
 # examples
 /examples
 /paradigms
+
+# Session
+Session.vim

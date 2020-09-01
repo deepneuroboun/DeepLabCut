@@ -15,12 +15,15 @@ import webbrowser,subprocess
 import deeplabcut
 from deeplabcut.utils import auxiliaryfunctions
 from deeplabcut.gui.analyze_videos import Analyze_videos
+from deeplabcut.gui import analysis_toolbox
 
+deeplabcut_root = os.path.split(deeplabcut.__path__[0])[0]
+PARADIGM_PATH = os.path.join(deeplabcut_root, 'paradigms')
 media_path = os.path.join(deeplabcut.__path__[0], 'gui' , 'media')
-OFT_cfg = os.path.join(deeplabcut.__path__[0], 'paradimgs', 'OFT', 'config.yaml')
-FST_cfg = os.path.join(deeplabcut.__path__[0], 'paradimgs', 'FST', 'config.yaml')
-WYM_cfg = os.path.join(deeplabcut.__path__[0], 'paradimgs', 'WYM', 'config.yaml')
-EPM_cfg = os.path.join(deeplabcut.__path__[0], 'paradimgs', 'EPM', 'config.yaml')
+OFT_cfg = os.path.join(PARADIGM_PATH, 'OFT', 'config.yaml')
+FST_cfg = os.path.join(PARADIGM_PATH, 'FST', 'config.yaml')
+WYM_cfg = os.path.join(PARADIGM_PATH, 'WYM', 'config.yaml')
+EPM_cfg = os.path.join(PARADIGM_PATH, 'EPM', 'config.yaml')
 
 logo = os.path.join(media_path,'logo.png')
 class CreateNewProject(wx.Panel):
@@ -32,10 +35,12 @@ class CreateNewProject(wx.Panel):
         w=gui_size[1]
         wx.Panel.__init__(self, parent, -1,style=wx.SUNKEN_BORDER,size=(h,w))
         # variable initilization
-        self.filelist = []
+        self.videos_filelist = []
+        self.data_filelist = []
         self.dir = None
         self.copy = False
-        self.cfg = OFT_cfg
+        self.config = OFT_cfg
+        self.cfg = auxiliaryfunctions.read_config(self.config)
         self.loaded = False
 
         # design the panel
@@ -65,6 +70,7 @@ class CreateNewProject(wx.Panel):
 
         self.sel_data = wx.Button(self, label="Load Data")
         self.sizer.Add(self.sel_data, pos=(3,1), flag=wx.TOP, border=6)
+        self.sel_data.Bind(wx.EVT_BUTTON, self.select_data)
 
 #
 
@@ -94,6 +100,17 @@ class CreateNewProject(wx.Panel):
 
 
 
+    def select_data(self,event):
+        """
+        Selects the data from the directory
+        """
+        cwd = os.getcwd()
+        dlg = wx.FileDialog(self, "Select data to add to the project", cwd, "", "*.*", wx.FD_MULTIPLE)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.data = dlg.GetPaths()
+            self.data_filelist = self.data_filelist + self.data
+            self.sel_data.SetLabel("Total %s Data selected" %len(self.data_filelist))
+
     def select_videos(self,event):
         """
         Selects the videos from the directory
@@ -102,8 +119,8 @@ class CreateNewProject(wx.Panel):
         dlg = wx.FileDialog(self, "Select videos to add to the project", cwd, "", "*.*", wx.FD_MULTIPLE)
         if dlg.ShowModal() == wx.ID_OK:
             self.vids = dlg.GetPaths()
-            self.filelist = self.filelist + self.vids
-            self.sel_vids.SetLabel("Total %s Videos selected" %len(self.filelist))
+            self.videos_filelist = self.videos_filelist + self.vids
+            self.sel_vids.SetLabel("Total %s Videos selected" %len(self.videos_filelist))
 
     def activate_change_wd(self,event):
         """
@@ -121,39 +138,18 @@ class CreateNewProject(wx.Panel):
         if dlg.ShowModal() == wx.ID_OK:
             self.dir = dlg.GetPath()
 
+    # TODO: Change create new project to analyze videos or data
     def create_new_project(self,event):
         """
         Finally create the new project
         """
         wx.MessageBox('Project Loaded!', 'Info', wx.OK | wx.ICON_INFORMATION)
-        self.loaded = True
-        self.edit_config_file.Enable(True)
-        else:
-            self.task = self.proj_name_txt_box.GetValue()
-            self.scorer = self.exp_txt_box.GetValue()
-            if self.task and self.scorer and len(self.filelist):
-                self.cfg = deeplabcut.create_new_project(self.task, self.scorer, self.filelist, self.dir, self.copy_choice.IsChecked())
-            else:
-                wx.MessageBox('Some of the entries are missing.\n\nMake sure that the task and experimenter name are specified and videos are selected!', 'Error', wx.OK | wx.ICON_ERROR)
-                self.cfg = False
-                self.loaded = False
-            if self.cfg:
-                wx.MessageBox('New Project Created', 'Info', wx.OK | wx.ICON_INFORMATION)
-                self.loaded = True
-                self.edit_config_file.Enable(True)
+        self.analysis_options()
 
-        # Remove the pages in case the user goes back to the create new project and creates/load a new project
-        if self.parent.GetPageCount() > 3:
-            for i in range(2, self.parent.GetPageCount()):
-                self.parent.RemovePage(2)
-                self.parent.Layout()
-
-        # Add all the other pages
-        if self.loaded:
-            self.edit_config_file.Enable(True)
-            page8 = Analyze_videos(self.parent,self.gui_size,self.cfg)
-            self.parent.AddPage(page8, "Analyze videos")
 
     def reset_project(self,event):
         # TODO : Resetting makes the videos disappear and reload all the stuff
         raise NotImplementedError
+
+    def analysis_options(self):
+        analysis_toolbox.show(self.config)
