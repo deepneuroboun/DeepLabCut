@@ -26,6 +26,7 @@ from pathlib import Path
 import argparse
 from deeplabcut.generate_training_dataset import auxfun_drag_label
 from deeplabcut.utils import auxiliaryfunctions
+from deeplabcut.utils import plotting
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 
@@ -107,11 +108,9 @@ class ScrollPanel(SP.ScrolledPanel):
         """
         self.choiceBox = wx.BoxSizer(wx.VERTICAL)
 
-        self.checkBox = wx.CheckBox(self, id=wx.ID_ANY,label = 'This is our Analysis Toolbox')
         self.quartile = wx.CheckBox(self, id=wx.ID_ANY, label = 'Quartile')
         self.center = wx.CheckBox(self, id=wx.ID_ANY, label = 'Center')
 
-        self.choiceBox.Add(self.checkBox, 0, wx.ALL, 5 )
         self.choiceBox.Add(self.quartile, 0, wx.ALL, 5 )
         self.choiceBox.Add(self.center, 0, wx.ALL, 5)
 
@@ -137,7 +136,7 @@ class MainFrame(wx.Frame):
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = 'DeepNeuroBoun - Labeling ToolBox',
                             size = wx.Size(self.gui_size), pos = wx.DefaultPosition, style = wx.RESIZE_BORDER|wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
         self.statusbar = self.CreateStatusBar()
-        self.statusbar.SetStatusText("Looking for a folder to start labeling. Click 'Load frames' to begin.")
+        self.statusbar.SetStatusText("Looking for a folder to start analyzing. Click 'Load frame' to begin.")
 
         self.SetSizeHints(wx.Size(self.gui_size)) #  This sets the minimum size of the GUI. It can scale now!
 ###################################################################################################################################################
@@ -165,9 +164,14 @@ class MainFrame(wx.Frame):
 
 
         widgetsizer.AddStretchSpacer(15)
+        self.ok = wx.Button(self.widget_panel, id=wx.ID_ANY, label="OK")
         self.quit = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Quit")
+
+        widgetsizer.Add(self.ok, 1, wx.ALL|wx.ALIGN_LEFT|wx.EXPAND, 15)
         widgetsizer.Add(self.quit , 1, wx.ALL|wx.ALIGN_RIGHT|wx.EXPAND, 15)
+
         self.quit.Bind(wx.EVT_BUTTON, self.quitButton)
+        self.ok.Bind(wx.EVT_BUTTON, self.okButton)
 
         self.widget_panel.SetSizer(widgetsizer)
         self.widget_panel.SetSizerAndFit(widgetsizer)
@@ -202,6 +206,8 @@ class MainFrame(wx.Frame):
 
 ###############################################################################################################################
 # BUTTONS FUNCTIONS FOR HOTKEYS
+    def okButton(self, event):
+        plotting.plot_trajectories(self.config_file, self.videos, self.options, videotype='.MP4')
 
 
 
@@ -211,9 +217,7 @@ class MainFrame(wx.Frame):
         """
         self.statusbar.SetStatusText("Qutting now!")
 
-        nextFilemsg = wx.MessageBox('Do you want to label another data set?', 'Repeat?', wx.YES_NO | wx.ICON_INFORMATION)
         self.Destroy()
-        print("You can now check the labels, using 'check_labels' before proceeding. Then, you can use the function 'create_training_dataset' to create the training dataset.")
 
 
 
@@ -279,12 +283,22 @@ class MainFrame(wx.Frame):
     # Analysis Patches
     def createPatch(self, img_size):
         x, y, d = img_size
-        self.circle = patches.Rectangle((y/4, x/4), y/2, x/2, fill=False, color='w', lw=4)
+        self.central_rect = patches.Rectangle((y/4, x/4), y/2, x/2, fill=False, color='w', lw=4)
         starting_points = [(0,0), (y/2, 0), (0, x/2), (y/2,x/2)]
         quadrants = []
         for starting_point in starting_points:
             quadrants.append(patches.Rectangle(starting_point, y/2, x/2, fill=False, color='w', lw=4))
         self.rect = PatchCollection(quadrants, match_original=True)
+        self.options = {
+                'vector-based': {
+                    'start' : [(x/2, y/2), (x/2, y/2), (x/2, y/2), (x/2, y/2)],
+                    'end' : [(0, y/2), (x/2, 0), (x, y/2), (x/2, y)]
+                    },
+                'center-based': {
+                    'start' : [(x/4, y/4), (3*x/4, y/4), (3*x/4, 3*y/4), (x/4, 3*y/4)],
+                    'end' : [(3*x/4, y/4), (3*x/4, 3*y/4), (x/4, 3*y/4), (x/4, y/4)]
+                    }
+                }
 
 
     # Quartile Analysis showing to the plot
@@ -292,7 +306,6 @@ class MainFrame(wx.Frame):
         curBox = evt.GetEventObject()
         if(curBox.IsChecked()):
             self.axes.add_collection(self.rect)
-            print("Hello Quartile!")
         else:
             self.rect.remove()
         self.figure.canvas.draw()
@@ -303,10 +316,9 @@ class MainFrame(wx.Frame):
     def isCentral(self, evt):
         curBox = evt.GetEventObject()
         if(curBox.IsChecked()):
-            self.axes.add_patch(self.circle)
-            print("Hello Central!")
+            self.axes.add_patch(self.central_rect)
         else:
-            self.circle.remove()
+            self.central_rect.remove()
         self.figure.canvas.draw()
 
 

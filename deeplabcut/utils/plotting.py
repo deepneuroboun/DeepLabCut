@@ -31,7 +31,56 @@ def Histogram(vector,color,bins):
     plt.hist(dvector,color=color,histtype='step',bins=bins)
 #    fig.colorbar(im, ax=ax)
 
-def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures,suffix='.png'):
+def vec_p(x1, y1, x2, y2):
+    return x1 * y2 - y1 * x2
+
+def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffix='.png'):
+    plt.figure(figsize=(8,6))
+    pcutoff = cfg['pcutoff']
+    colors = get_cmap(len(bodyparts2plot),name = cfg['colormap'])
+    alphavalue = cfg['alphavalue']
+
+    # Vector based rectangular calculation
+    vector_based = options['vector-based']
+    for bpindex, bp in enumerate(bodyparts2plot):
+        Index = Dataframe[scorer][bp]['likelihood'].values > pcutoff
+        xValues = Dataframe[scorer][bp]['x'].values[Index]
+        yValues = Dataframe[scorer][bp]['y'].values[Index]
+        bases = []
+        region_cnt = len(vector_based['start'])
+        for elem in zip(xValues, yValues):
+            for i in range(region_cnt):
+                fi_v_x, fi_v_y = vector_based['end'][i]
+                fi_v_x = fi_v_x - vector_based['start'][i][0]
+                fi_v_y = fi_v_y - vector_based['start'][i][1]
+
+                t_v_x = elem[0] - vector_based['start'][i][0]
+                t_v_y = elem[1] - vector_based['start'][i][1]
+
+                fi_res = vec_p(fi_v_x, fi_v_y, t_v_x, t_v_y)
+
+                se_v_x, se_v_y = vector_based['end'][(i+1) % region_cnt]
+                se_v_x = se_v_x -  vector_based['start'][(i+1) % region_cnt][0]
+                se_v_y = se_v_y - vector_based['start'][(i+1) % region_cnt][1]
+
+                t_v_x = elem[0] - vector_based['start'][(i+1) % region_cnt][0]
+                t_v_y = elem[1] - vector_based['start'][(i+1) % region_cnt][1]
+
+                se_res = vec_p(se_v_x, se_v_y, t_v_x, t_v_y)
+
+                if fi_res > 0 and se_res < 0:
+                    bases.append(i+1)
+                    break
+        plt.hist(bases)
+        plt.savefig(os.path.join(tmpfolder,"regions"+suffix))
+        break
+    print("First Part Completed!")
+
+
+
+
+def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures, options, suffix='.png'):
+    FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options)
     ''' Plots poses vs time; pose x vs pose y; histogram of differences and likelihoods.'''
     plt.figure(figsize=(8, 6))
     pcutoff = cfg['pcutoff']
@@ -110,7 +159,7 @@ def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures,
 # Looping analysis over video
 ##################################################
 
-def plot_trajectories(config, videos, videotype='.avi', shuffle=1, trainingsetindex=0, filtered=False,
+def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trainingsetindex=0, filtered=False,
                       displayedbodyparts='all', showfigures=False, destfolder=None):
     """
     Plots the trajectories of various bodyparts across the video.
@@ -182,7 +231,7 @@ def plot_trajectories(config, videos, videotype='.avi', shuffle=1, trainingsetin
                 auxiliaryfunctions.attempttomakefolder(os.path.join(basefolder,'plot-poses'))
                 tmpfolder = os.path.join(basefolder,'plot-poses', vname)
                 auxiliaryfunctions.attempttomakefolder(tmpfolder)
-                PlottingResults(tmpfolder, Dataframe, DLCscorer, cfg, bodyparts, showfigures, suffix+'.png')
+                PlottingResults(tmpfolder, Dataframe, DLCscorer, cfg, bodyparts, showfigures, options, suffix+'.png')
 
     print('Plots created! Please check the directory "plot-poses" within the video directory')
 
