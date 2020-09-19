@@ -35,6 +35,7 @@ def vec_p(x1, y1, x2, y2):
     return x1 * y2 - y1 * x2
 
 def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffix='.png'):
+    FPS = 24.99
     plt.figure(figsize=(8,6))
     pcutoff = cfg['pcutoff']
     colors = get_cmap(len(bodyparts2plot),name = cfg['colormap'])
@@ -72,9 +73,45 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
                     bases.append(i+1)
                     break
         plt.hist(bases)
+        locs, labels = plt.yticks()
+        plt.yticks(locs, locs // FPS * 1000)
         plt.savefig(os.path.join(tmpfolder,"regions"+suffix))
         break
     print("First Part Completed!")
+
+    plt.figure(figsize=(8,6))
+    center_based = options['center-based']
+    for bpindex, bp in enumerate(bodyparts2plot):
+        Index = Dataframe[scorer][bp]['likelihood'].values > pcutoff
+        xValues = Dataframe[scorer][bp]['x'].values[Index]
+        yValues = Dataframe[scorer][bp]['y'].values[Index]
+        bases = []
+        center_cnt = len(center_based['start'])
+        for elem in zip(xValues, yValues):
+            isCenter = True
+            for i in range(region_cnt):
+                fi_v_x, fi_v_y = center_based['end'][i]
+                fi_v_x = fi_v_x - center_based['start'][i][0]
+                fi_v_y = fi_v_y - center_based['start'][i][1]
+
+                t_v_x = elem[0] - center_based['start'][i][0]
+                t_v_y = elem[1] - center_based['start'][i][1]
+
+                res = vec_p(fi_v_x, fi_v_y, t_v_x, t_v_y)
+
+                if res < 0:
+                    isCenter = False
+                    break
+            if isCenter:
+                bases.append(1)
+            else:
+                bases.append(2)
+        plt.hist(bases)
+        locs, labels = plt.yticks()
+        plt.yticks(locs, locs // FPS * 1000)
+        plt.savefig(os.path.join(tmpfolder,"central"+suffix))
+        break
+    print("Second Part Completed!")
 
 
 
