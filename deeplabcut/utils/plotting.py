@@ -17,7 +17,9 @@ import argparse
 from deeplabcut.utils import auxiliaryfunctions
 import numpy as np
 import matplotlib.pyplot as plt
+from plotnine import ggplot, geom_point, aes, geom_histogram
 import os
+
 
 # https://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
 def get_cmap(n, name='hsv'):
@@ -44,9 +46,11 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
     # Vector based rectangular calculation
     vector_based = options['vector-based']
     for bpindex, bp in enumerate(bodyparts2plot):
-        Index = Dataframe[scorer][bp]['likelihood'].values > pcutoff
-        xValues = Dataframe[scorer][bp]['x'].values[Index]
-        yValues = Dataframe[scorer][bp]['y'].values[Index]
+        filtered_index = Dataframe[scorer][bp]['likelihood'].values > pcutoff
+        filtered_dataframe = Dataframe[scorer][bp][filtered_index]
+        # Keep this part until optimization
+        xValues = Dataframe[scorer][bp]['x'].values[filtered_index]
+        yValues = Dataframe[scorer][bp]['y'].values[filtered_index]
         bases = []
         region_cnt = len(vector_based['start'])
         for elem in zip(xValues, yValues):
@@ -72,46 +76,12 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
                 if fi_res > 0 and se_res < 0:
                     bases.append(i+1)
                     break
-        plt.hist(bases)
-        locs, labels = plt.yticks()
-        plt.yticks(locs, locs // FPS * 1000)
-        plt.savefig(os.path.join(tmpfolder,"regions"+suffix))
+        filtered_dataframe['bases'] = bases
+        p = (ggplot(filtered_dataframe, aes(x='bases')) + geom_histogram())
+        p.save(os.path.join(tmpfolder,"regions"+suffix), dpi=1000)
         break
     print("First Part Completed!")
 
-    plt.figure(figsize=(8,6))
-    center_based = options['center-based']
-    for bpindex, bp in enumerate(bodyparts2plot):
-        Index = Dataframe[scorer][bp]['likelihood'].values > pcutoff
-        xValues = Dataframe[scorer][bp]['x'].values[Index]
-        yValues = Dataframe[scorer][bp]['y'].values[Index]
-        bases = []
-        center_cnt = len(center_based['start'])
-        for elem in zip(xValues, yValues):
-            isCenter = True
-            for i in range(region_cnt):
-                fi_v_x, fi_v_y = center_based['end'][i]
-                fi_v_x = fi_v_x - center_based['start'][i][0]
-                fi_v_y = fi_v_y - center_based['start'][i][1]
-
-                t_v_x = elem[0] - center_based['start'][i][0]
-                t_v_y = elem[1] - center_based['start'][i][1]
-
-                res = vec_p(fi_v_x, fi_v_y, t_v_x, t_v_y)
-
-                if res < 0:
-                    isCenter = False
-                    break
-            if isCenter:
-                bases.append(1)
-            else:
-                bases.append(2)
-        plt.hist(bases)
-        locs, labels = plt.yticks()
-        plt.yticks(locs, locs // FPS * 1000)
-        plt.savefig(os.path.join(tmpfolder,"central"+suffix))
-        break
-    print("Second Part Completed!")
 
 
 
