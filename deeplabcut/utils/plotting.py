@@ -89,6 +89,7 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
                 if fi_res > 0 and se_res < 0:
                     bases.append(i+1)
                     break
+        #TODO: change hardcoded base labels below
         filtered_dataframe['bases'] = bases
         filtered_dataframe.loc[filtered_dataframe['bases']==1,'bases'] = "I"
         filtered_dataframe.loc[filtered_dataframe['bases']==2,'bases'] = "II"
