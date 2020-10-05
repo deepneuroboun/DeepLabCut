@@ -17,9 +17,11 @@ import argparse
 from deeplabcut.utils import auxiliaryfunctions
 import numpy as np
 import matplotlib.pyplot as plt
-from plotnine import ggplot, geom_point, aes, geom_histogram
+from plotnine import ggplot, geom_point, aes, geom_histogram, labels
 import os
 
+# TODO: change hard coded FPS
+FPS=24.99
 
 # https://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
 def get_cmap(n, name='hsv'):
@@ -36,8 +38,19 @@ def Histogram(vector,color,bins):
 def vec_p(x1, y1, x2, y2):
     return x1 * y2 - y1 * x2
 
+def cm_pix_ratio(cfg):
+    height = cfg['height']
+    width = cfg['width']
+    x1= cfg['x1']
+    x2= cfg['x2']
+    y1= cfg['y1']
+    y2= cfg['y2']
+    height_ratio= height/(y2-y1)
+    width_ratio = width/(x2-x1)
+    return height_ratio,width_ratio
+
+
 def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffix='.png'):
-    FPS = 24.99
     plt.figure(figsize=(8,6))
     pcutoff = cfg['pcutoff']
     colors = get_cmap(len(bodyparts2plot),name = cfg['colormap'])
@@ -77,7 +90,15 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
                     bases.append(i+1)
                     break
         filtered_dataframe['bases'] = bases
-        p = (ggplot(filtered_dataframe, aes(x='bases')) + geom_histogram())
+        filtered_dataframe.loc[filtered_dataframe['bases']==1,'bases'] = "I"
+        filtered_dataframe.loc[filtered_dataframe['bases']==2,'bases'] = "II"
+        filtered_dataframe.loc[filtered_dataframe['bases']==3,'bases'] = "III"
+        filtered_dataframe.loc[filtered_dataframe['bases']==4,'bases'] = "IV"
+        p = (ggplot(filtered_dataframe, aes(x='bases', y='stat(count/FPS)'))  + geom_histogram(binwidth=.5) + 
+            labels.labs(title = "Time Spent in Each Region",
+                x="Region",
+                y="Seconds")
+        )
         p.save(os.path.join(tmpfolder,"regions"+suffix), dpi=1000)
         break
     print("First Part Completed!")
@@ -93,10 +114,12 @@ def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures,
     pcutoff = cfg['pcutoff']
     colors = get_cmap(len(bodyparts2plot),name = cfg['colormap'])
     alphavalue = cfg['alphavalue']
+    height_ratio,width_ratio = cm_pix_ratio(cfg)
+
 
     for bpindex, bp in enumerate(bodyparts2plot):
         Index=Dataframe[scorer][bp]['likelihood'].values > pcutoff
-        plt.plot(Dataframe[scorer][bp]['x'].values[Index],Dataframe[scorer][bp]['y'].values[Index],'.',color=colors(bpindex),alpha=alphavalue)
+        plt.plot((Dataframe[scorer][bp]['x'].values[Index])*width_ratio,(Dataframe[scorer][bp]['y'].values[Index])*height_ratio,'.',color=colors(bpindex),alpha=alphavalue)
 
     plt.gca().invert_yaxis()
 
@@ -104,23 +127,23 @@ def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures,
     sm._A = []
     cbar = plt.colorbar(sm,ticks=range(len(bodyparts2plot)))
     cbar.set_ticklabels(bodyparts2plot)
-    plt.xlabel('X position in pixels')
-    plt.ylabel('Y position in pixels')
+    plt.xlabel('X position in centimeters')
+    plt.ylabel('Y position in centimeters')
     plt.savefig(os.path.join(tmpfolder,"trajectory"+suffix))
     plt.figure(figsize=(30, 10))
-    Time=np.arange(np.size(Dataframe[scorer][bodyparts2plot[0]]['x'].values))
+    Time=(np.arange(np.size(Dataframe[scorer][bodyparts2plot[0]]['x'].values)))/FPS
 
     for bpindex, bp in enumerate(bodyparts2plot):
         Index=Dataframe[scorer][bp]['likelihood'].values > pcutoff
-        plt.plot(Time[Index],Dataframe[scorer][bp]['x'].values[Index],'--',color=colors(bpindex),alpha=alphavalue)
-        plt.plot(Time[Index],Dataframe[scorer][bp]['y'].values[Index],'-',color=colors(bpindex),alpha=alphavalue)
+        plt.plot(Time[Index],(Dataframe[scorer][bp]['x'].values[Index])*width_ratio,'--',color=colors(bpindex),alpha=alphavalue)
+        plt.plot(Time[Index],(Dataframe[scorer][bp]['y'].values[Index])*height_ratio,'-',color=colors(bpindex),alpha=alphavalue)
 
     sm = plt.cm.ScalarMappable(cmap=plt.get_cmap(cfg['colormap']), norm=plt.Normalize(vmin=0, vmax=len(bodyparts2plot)-1))
     sm._A = []
     cbar = plt.colorbar(sm,ticks=range(len(bodyparts2plot)))
     cbar.set_ticklabels(bodyparts2plot)
-    plt.xlabel('Frame Index')
-    plt.ylabel('X-(dashed) and Y- (solid) position in pixels')
+    plt.xlabel('Seconds')
+    plt.ylabel('X-(dashed) and Y- (solid) position in centimeters')
     plt.savefig(os.path.join(tmpfolder,"plot"+suffix))
 
     plt.figure(figsize=(30, 10))
@@ -132,7 +155,7 @@ def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures,
     sm._A = []
     cbar = plt.colorbar(sm,ticks=range(len(bodyparts2plot)))
     cbar.set_ticklabels(bodyparts2plot)
-    plt.xlabel('Frame Index')
+    plt.xlabel('Seconds')
     plt.ylabel('Likelihood')
 
     plt.savefig(os.path.join(tmpfolder,"plot-likelihood"+suffix))
