@@ -168,7 +168,7 @@ class MainFrame(wx.Frame):
         self.quit = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Quit")
 
         widgetsizer.Add(self.ok, 1, wx.ALL|wx.ALIGN_LEFT|wx.EXPAND, 15)
-        widgetsizer.Add(self.quit , 1, wx.ALL|wx.ALIGN_RIGHT|wx.EXPAND, 15)
+        widgetsizer.Add(self.quit , 1, wx.ALL|wx.EXPAND, 15)
 
         self.quit.Bind(wx.EVT_BUTTON, self.quitButton)
         self.ok.Bind(wx.EVT_BUTTON, self.okButton)
@@ -230,7 +230,7 @@ class MainFrame(wx.Frame):
         cwd = os.path.join(os.getcwd())
 
 # Reading config file and its variables
-        self.cfg = auxiliaryfunctions.read_config(self.config_file)
+        self.cfg = auxiliaryfunctions.read_config(self.config_file, is_paradigm=True)
         self.scorer = self.cfg['scorer']
         self.bodyparts = self.cfg['bodyparts']
         self.videos = self.cfg['video_sets'].keys()
