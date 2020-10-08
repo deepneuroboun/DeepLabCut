@@ -78,7 +78,7 @@ class Welcome(wx.Panel):
     def goto_paradigm(self, event):
         cur_notebook = self.parent
         btn = event.GetEventObject()
-        paradigm_page = CreateNewProject(cur_notebook, self.gui_size)
+        paradigm_page = CreateNewProject(cur_notebook, self.gui_size, btn.GetLabelText())
         cur_notebook.AddPage(paradigm_page, btn.GetLabelText())
         self.parent.SetSelection(1)
 

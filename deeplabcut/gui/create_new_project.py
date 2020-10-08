@@ -17,17 +17,13 @@ from deeplabcut.utils import auxiliaryfunctions
 from deeplabcut.gui.analyze_videos import Analyze_videos
 from deeplabcut.gui import analysis_toolbox
 
-deeplabcut_root = os.path.split(deeplabcut.__path__[0])[0]
+deeplabcut_root = os.path.dirname(deeplabcut.__path__[0])
 PARADIGM_PATH = os.path.join(deeplabcut_root, 'paradigms')
 media_path = os.path.join(deeplabcut.__path__[0], 'gui' , 'media')
-OFT_cfg = os.path.join(PARADIGM_PATH, 'OFT', 'config.yaml')
-FST_cfg = os.path.join(PARADIGM_PATH, 'FST', 'config.yaml')
-WYM_cfg = os.path.join(PARADIGM_PATH, 'WYM', 'config.yaml')
-EPM_cfg = os.path.join(PARADIGM_PATH, 'EPM', 'config.yaml')
 
 logo = os.path.join(media_path,'logo.png')
 class CreateNewProject(wx.Panel):
-    def __init__(self, parent,gui_size):
+    def __init__(self, parent, gui_size, cur_paradigm):
         wx.Panel.__init__(self, parent)
         self.gui_size = gui_size
         self.parent = parent
@@ -39,8 +35,7 @@ class CreateNewProject(wx.Panel):
         self.data_filelist = []
         self.dir = None
         self.copy = False
-        self.config = OFT_cfg
-        self.cfg = auxiliaryfunctions.read_config(self.config)
+        self.config = os.path.join(PARADIGM_PATH, cur_paradigm, 'config.yaml')
         self.loaded = False
 
         # design the panel
