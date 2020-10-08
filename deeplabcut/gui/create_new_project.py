@@ -11,17 +11,15 @@ Licensed under GNU Lesser General Public License v3.0
 
 import wx
 import os,sys,pydoc,platform
-import webbrowser,subprocess
 import deeplabcut
-from deeplabcut.utils import auxiliaryfunctions
-from deeplabcut.gui.analyze_videos import Analyze_videos
+import sys
 from deeplabcut.gui import analysis_toolbox
 
 deeplabcut_root = os.path.dirname(deeplabcut.__path__[0])
 PARADIGM_PATH = os.path.join(deeplabcut_root, 'paradigms')
 media_path = os.path.join(deeplabcut.__path__[0], 'gui' , 'media')
-
 logo = os.path.join(media_path,'logo.png')
+
 class CreateNewProject(wx.Panel):
     def __init__(self, parent, gui_size, cur_paradigm):
         wx.Panel.__init__(self, parent)
