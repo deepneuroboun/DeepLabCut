@@ -122,14 +122,13 @@ def read_config(configname, is_paradigm=False):
                   write_config(configname,cfg)
             else:
                 raise
-        
     else:
         raise FileNotFoundError ("Config file is not found. Please make sure that the file exists and/or that you passed the path of the config file correctly!")
     if (is_paradigm):
         cfg['project_path'] = os.path.dirname(path)
         for path, vals in cfg['video_sets'].items():
-           del cfg['video_sets'][path] 
-           new_path = os.path.join(cfg['project_path'], 'videos', os.path.basename(path))  
+           del cfg['video_sets'][path]
+           new_path = os.path.join(cfg['project_path'], 'videos', os.path.basename(path))
            cfg['video_sets'][new_path] = vals
 
     return(cfg)
@@ -324,7 +323,7 @@ mobilenet_v2_0.5:
 mobilenet_v2_0.35
 '''
 
-def GetScorerName(cfg,shuffle,trainFraction,trainingsiterations='unknown'):
+def GetScorerName(cfg,shuffle,trainFraction,trainingsiterations='unknown', is_paradigm=False):
     ''' Extract the scorer/network name for a particular shuffle, training fraction, etc. '''
     Task = cfg['Task']
     date = cfg['date']
@@ -337,7 +336,7 @@ def GetScorerName(cfg,shuffle,trainFraction,trainingsiterations='unknown'):
         else:
             snapshotindex=cfg['snapshotindex']
 
-        modelfolder=os.path.join(cfg["project_path"],str(GetModelFolder(trainFraction,shuffle,cfg)),'train')
+        modelfolder=os.path.join(cfg['project_path'],str(GetModelFolder(trainFraction,shuffle,cfg)),'train')
         Snapshots = np.array([fn.split('.')[0]for fn in os.listdir(modelfolder) if "index" in fn])
         increasing_indices = np.argsort([int(m.split('-')[1]) for m in Snapshots])
         Snapshots = Snapshots[increasing_indices]

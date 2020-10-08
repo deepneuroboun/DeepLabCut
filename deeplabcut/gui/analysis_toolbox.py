@@ -124,7 +124,7 @@ class ScrollPanel(SP.ScrolledPanel):
 class MainFrame(wx.Frame):
     """Contains the main GUI and button boxes"""
 
-    def __init__(self, parent,config):
+    def __init__(self, parent, config, filelist):
 # Settting the GUI size and panels design
         displays = (wx.Display(i) for i in range(wx.Display.GetCount())) # Gets the number of displays
         screenSizes = [display.GetGeometry().GetSize() for display in displays] # Gets the size of each display
@@ -187,6 +187,7 @@ class MainFrame(wx.Frame):
         self.updatedCoords = []
         self.dataFrame = None
         self.config_file = config
+        self.filelist = filelist
         self.new_labels = False
         self.buttonCounter = []
         self.bodyparts2plot = []
@@ -207,7 +208,8 @@ class MainFrame(wx.Frame):
 ###############################################################################################################################
 # BUTTONS FUNCTIONS FOR HOTKEYS
     def okButton(self, event):
-        plotting.plot_trajectories(self.config_file, self.videos, self.options, videotype='.MP4')
+        res = plotting.plot_trajectories(self.config_file, self.filelist, self.options, videotype='.MP4')
+        wx.MessageBox(res, 'Info', wx.OK | wx.ICON_INFORMATION)
 
 
 
@@ -355,9 +357,9 @@ class MainFrame(wx.Frame):
         return(self.buttonCounter)
 
 
-def show(config):
+def show(config, files=[]):
     app = wx.App()
-    frame = MainFrame(None,config).Show()
+    frame = MainFrame(None, config, files).Show()
     app.MainLoop()
 
 

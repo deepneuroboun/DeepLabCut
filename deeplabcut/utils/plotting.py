@@ -95,7 +95,7 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
         filtered_dataframe.loc[filtered_dataframe['bases']==2,'bases'] = "II"
         filtered_dataframe.loc[filtered_dataframe['bases']==3,'bases'] = "III"
         filtered_dataframe.loc[filtered_dataframe['bases']==4,'bases'] = "IV"
-        p = (ggplot(filtered_dataframe, aes(x='bases', y='stat(count/FPS)'))  + geom_histogram(binwidth=.5) + 
+        p = (ggplot(filtered_dataframe, aes(x='bases', y='stat(count/FPS)'))  + geom_histogram(binwidth=.5) +
             labels.labs(title = "Time Spent in Each Region",
                 x="Region",
                 y="Seconds")
@@ -230,11 +230,11 @@ def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trai
     Example
     --------
     for labeling the frames
-    >>> deeplabcut.plot_trajectories('home/alex/analysis/project/reaching-task/config.yaml',['/home/alex/analysis/project/videos/reachingvideo1.avi'])
+    >>> deeplabcut.plot_trajectories('~/analysis/project/reaching-task/config.yaml',['~/analysis/project/videos/reachingvideo1.avi'])
     --------
 
     """
-    cfg = auxiliaryfunctions.read_config(config)
+    cfg = auxiliaryfunctions.read_config(config, is_paradigm=True)
     trainFraction = cfg['TrainingFraction'][trainingsetindex]
     DLCscorer,DLCscorerlegacy = auxiliaryfunctions.GetScorerName(cfg,shuffle,trainFraction) #automatically loads corresponding model (even training iteration based on snapshot index)
     bodyparts = auxiliaryfunctions.IntersectionofBodyPartsandOnesGivenbyUser(cfg, displayedbodyparts)
@@ -263,8 +263,8 @@ def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trai
                 tmpfolder = os.path.join(basefolder,'plot-poses', vname)
                 auxiliaryfunctions.attempttomakefolder(tmpfolder)
                 PlottingResults(tmpfolder, Dataframe, DLCscorer, cfg, bodyparts, showfigures, options, suffix+'.png')
+    return 'Plots created! Please check the directory "plot-poses" within the video directory'
 
-    print('Plots created! Please check the directory "plot-poses" within the video directory')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

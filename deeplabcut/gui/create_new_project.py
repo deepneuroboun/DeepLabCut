@@ -73,7 +73,7 @@ class CreateNewProject(wx.Panel):
 
         self.ok = wx.Button(self, label="Ok")
         self.sizer.Add(self.ok, pos=(4, 2))
-        self.ok.Bind(wx.EVT_BUTTON, self.create_new_project)
+        self.ok.Bind(wx.EVT_BUTTON, self.analyze_file)
 
 
         self.reset = wx.Button(self, label="Reset")
@@ -97,7 +97,7 @@ class CreateNewProject(wx.Panel):
         """
         Selects the data from the directory
         """
-        cwd = os.getcwd()
+        cwd = os.getcwd() # current working directory is the one deeplapcut runs
         dlg = wx.FileDialog(self, "Select data to add to the project", cwd, "", "*.*", wx.FD_MULTIPLE)
         if dlg.ShowModal() == wx.ID_OK:
             self.data = dlg.GetPaths()
@@ -131,18 +131,17 @@ class CreateNewProject(wx.Panel):
         if dlg.ShowModal() == wx.ID_OK:
             self.dir = dlg.GetPath()
 
-    # TODO: Change create new project to analyze videos or data
-    def create_new_project(self,event):
-        """
-        Finally create the new project
-        """
-        wx.MessageBox('Project Loaded!', 'Info', wx.OK | wx.ICON_INFORMATION)
-        self.analysis_options()
+    def analyze_file(self,event):
+        wx.MessageBox('Analysis', 'Info', wx.OK | wx.ICON_INFORMATION)
+        cur_list = []
+        if (self.data_filelist):
+            cur_list = self.data_filelist
+        if (self.videos_filelist):
+            cur_list = self.videos_filelist
+        analysis_toolbox.show(self.config, cur_list)
 
 
     def reset_project(self,event):
         # TODO : Resetting makes the videos disappear and reload all the stuff
         raise NotImplementedError
 
-    def analysis_options(self):
-        analysis_toolbox.show(self.config)
