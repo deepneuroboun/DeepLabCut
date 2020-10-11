@@ -110,3 +110,4 @@ ENV/
 
 # Session
 Session.vim
+deeplabcut/.vscode/settings.json
