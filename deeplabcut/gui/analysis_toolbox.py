@@ -29,6 +29,8 @@ from deeplabcut.utils import auxiliaryfunctions
 from deeplabcut.utils import plotting
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
+from deeplabcut.gui.AnalysisDialog import AnalysisDialog
+from threading import Thread
 
 # ###########################################################################
 # Class for GUI MainFrame
@@ -208,8 +210,13 @@ class MainFrame(wx.Frame):
 ###############################################################################################################################
 # BUTTONS FUNCTIONS FOR HOTKEYS
     def okButton(self, event):
-        res = plotting.plot_trajectories(self.config_file, self.filelist, self.options, videotype='.MP4')
-        wx.MessageBox(res, 'Info', wx.OK | wx.ICON_INFORMATION)
+        plot_thread = Thread(target=plotting.plot_trajectories, 
+                args=(self.config_file, self.filelist, self.options), 
+                kwargs={'videotype': '.MP4'})
+        plot_thread.start()
+        dlg = AnalysisDialog()
+        dlg.ShowModal()
+        wx.MessageBox(True, 'Info', wx.OK | wx.ICON_INFORMATION)
 
 
 

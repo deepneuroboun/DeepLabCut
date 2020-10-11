@@ -15,6 +15,7 @@ import os.path
 from pathlib import Path
 import argparse
 from deeplabcut.utils import auxiliaryfunctions
+from deeplabcut.pose_estimation_tensorflow import analyze_videos
 import numpy as np
 import matplotlib.pyplot as plt
 from plotnine import ggplot, geom_point, aes, geom_histogram, labels
@@ -252,8 +253,9 @@ def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trai
 
         if notanalyzed:
             print("The video was not analyzed with this scorer:", DLCscorer)
+            analyze_videos(config, [video], videotype='.MP4')
+        #LoadData
         else:
-            #LoadData
             print("Loading ", video, "and data.")
             datafound,metadata,Dataframe,DLCscorer,suffix=auxiliaryfunctions.LoadAnalyzedData(str(videofolder),vname,DLCscorer,filtered) #returns boolean variable if data was found and metadata + pandas array
             if datafound:

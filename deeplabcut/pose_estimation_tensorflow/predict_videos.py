@@ -23,10 +23,12 @@ import os
 import argparse
 from pathlib import Path
 from tqdm import tqdm
+from pubsub import pub
 import tensorflow as tf
 from deeplabcut.utils import auxiliaryfunctions
 import cv2
 from skimage.util import img_as_ubyte
+import wx
 
 ####################################################
 # Loading data, and defining model folder
@@ -118,6 +120,7 @@ def analyze_videos(config, videos, videotype='avi', shuffle=1, trainingsetindex=
     --------
 
     """
+    print("Hello World!")
     if 'TF_CUDNN_USE_AUTOTUNE' in os.environ:
         del os.environ['TF_CUDNN_USE_AUTOTUNE'] #was potentially set during training
 
@@ -127,7 +130,7 @@ def analyze_videos(config, videos, videotype='avi', shuffle=1, trainingsetindex=
     tf.reset_default_graph()
     start_path=os.getcwd() #record cwd to return to this directory in the end
 
-    cfg = auxiliaryfunctions.read_config(config)
+    cfg = auxiliaryfunctions.read_config(config, is_paradigm=True)
     trainFraction = cfg['TrainingFraction'][trainingsetindex]
 
     if crop is not None:
@@ -365,6 +368,7 @@ def GetPoseF_GTF(cfg,dlc_cfg, sess, inputs, outputs,cap,nframes,batchsize):
     while(cap.isOpened()):
             if counter%step==0:
                 pbar.update(step)
+                wx.CallAfter(pub.sendMessage, "analyze_listener", curValue=counter)
             ret, frame = cap.read()
             if ret:
                 frame=cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
