@@ -19,8 +19,10 @@ deeplabcut_root = os.path.dirname(deeplabcut.__path__[0])
 PARADIGM_PATH = os.path.join(deeplabcut_root, 'paradigms')
 media_path = os.path.join(deeplabcut.__path__[0], 'gui' , 'media')
 logo = os.path.join(media_path,'logo.png')
+bounneuro_logo = os.path.join(media_path, 'bounneuro.png')
 
 class CreateNewProject(wx.Panel):
+    SCALE = 5
     def __init__(self, parent, gui_size, cur_paradigm):
         wx.Panel.__init__(self, parent)
         self.gui_size = gui_size
@@ -31,6 +33,7 @@ class CreateNewProject(wx.Panel):
         # variable initilization
         self.videos_filelist = []
         self.data_filelist = []
+        self.filelist = []
         self.dir = None
         self.copy = False
         self.config = os.path.join(PARADIGM_PATH, cur_paradigm, 'config.yaml')
@@ -39,31 +42,30 @@ class CreateNewProject(wx.Panel):
         # design the panel
         self.sizer = wx.GridBagSizer(10, 15)
 
-        text1 = wx.StaticText(self, label="DeepNeuroBoun\nSimple Step\nAnalyze Videos", style=wx.ALIGN_CENTRE)
+        text1 = wx.StaticText(self, label="DeepNeuroBoun\nLoad Videos or Tracking Data", style=wx.ALIGN_CENTRE)
         self.sizer.Add(text1, pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM,border=15)
 
         # Add logo of DLC
         icon = wx.StaticBitmap(self, bitmap=wx.Bitmap(logo))
         self.sizer.Add(icon, pos=(0,2), flag=wx.TOP|wx.RIGHT|wx.ALIGN_RIGHT,border=5)
 
+        # Add bounneuro logo
+        boun_image = wx.Image(bounneuro_logo, type=wx.BITMAP_TYPE_PNG)
+        boun = wx.StaticBitmap(self, bitmap=wx.Bitmap(boun_image.Scale(boun_image.GetWidth() // self.SCALE, boun_image.GetHeight() // self.SCALE, wx.IMAGE_QUALITY_HIGH)))
+        self.sizer.Add(boun, pos=(5,2), flag=wx.BOTTOM|wx.RIGHT|wx.ALIGN_RIGHT,border=5)
+
         line = wx.StaticLine(self)
         self.sizer.Add(line, pos=(1, 0), span=(1, 3),flag=wx.EXPAND|wx.BOTTOM, border=10)
 
         # Add all the options
 
-        self.vids = wx.StaticText(self, label="Choose the videos:")
-        self.sizer.Add(self.vids, pos=(2, 0), flag=wx.TOP|wx.LEFT, border=10)
+        self.vids_or_data = wx.StaticText(self, label="Choose videos or tracking data:")
+        self.sizer.Add(self.vids_or_data, pos=(2, 0), flag=wx.TOP|wx.LEFT, border=10)
 
-        self.sel_vids = wx.Button(self, label="Load Videos")
-        self.sizer.Add(self.sel_vids, pos=(2, 1), flag=wx.TOP, border=6)
-        self.sel_vids.Bind(wx.EVT_BUTTON, self.select_videos)
+        self.sel_vids_or_data = wx.Button(self, label="Load")
+        self.sizer.Add(self.sel_vids_or_data, pos=(2, 1), flag=wx.TOP, border=6)
+        self.sel_vids_or_data.Bind(wx.EVT_BUTTON, self.select_videos_or_data)
 
-        self.data = wx.StaticText(self, label="Choose the track data:")
-        self.sizer.Add(self.data, pos=(3,0), flag=wx.TOP|wx.LEFT, border=10)
-
-        self.sel_data = wx.Button(self, label="Load Data")
-        self.sizer.Add(self.sel_data, pos=(3,1), flag=wx.TOP, border=6)
-        self.sel_data.Bind(wx.EVT_BUTTON, self.select_data)
 
 #
 
@@ -88,32 +90,45 @@ class CreateNewProject(wx.Panel):
         self.sizer.Fit(self)
 
     def help_function(self,event):
-        # TODO: change help function for DeepNeuroBoun
-        raise NotImplementedError
+        wx.MessageBox('Select either videos or tracking data.\n\nSupported video formats are mp4 and avi.\nSupported tracking data formats are csv and h5.\n\nIf you load videos, you will be directed to the video analysis screen.\nIf you load tracking data, you will be directed to the analysis toolbox.', 'Help', wx.OK | wx.ICON_INFORMATION)
 
 
 
-    def select_data(self,event):
+
+
+    def select_videos_or_data(self,event):
         """
-        Selects the data from the directory
-        """
-        cwd = os.getcwd() # current working directory is the one deeplapcut runs
-        dlg = wx.FileDialog(self, "Select data to add to the project", cwd, "", "*.*", wx.FD_MULTIPLE)
-        if dlg.ShowModal() == wx.ID_OK:
-            self.data = dlg.GetPaths()
-            self.data_filelist = self.data_filelist + self.data
-            self.sel_data.SetLabel("Total %s Data selected" %len(self.data_filelist))
-
-    def select_videos(self,event):
-        """
-        Selects the videos from the directory
+        Selects the videos or the tracking data from the directory
         """
         cwd = os.getcwd()
-        dlg = wx.FileDialog(self, "Select videos to add to the project", cwd, "", "*.*", wx.FD_MULTIPLE)
+        dlg = wx.FileDialog(self, "Select videos or tracking data to add to the project", cwd, "", "*.*", wx.FD_MULTIPLE)
         if dlg.ShowModal() == wx.ID_OK:
-            self.vids = dlg.GetPaths()
-            self.videos_filelist = self.videos_filelist + self.vids
-            self.sel_vids.SetLabel("Total %s Videos selected" %len(self.videos_filelist))
+            self.vids_or_data = dlg.GetPaths()
+        self.filelist = self.filelist + self.vids_or_data
+        video = not False in [point.lower().endswith(('.mp4','.avi')) for point in self.filelist] #may need to extend video types
+        track = not False in [point.lower().endswith(('.h5','.csv')) for point in self.filelist]
+
+        if video:
+            if any(item in self.videos_filelist for item in self.filelist):
+                wx.MessageBox('Already selected!', 'Error', wx.OK | wx.ICON_INFORMATION)
+            else:
+                self.videos_filelist += self.filelist
+                self.sel_vids_or_data.SetLabel("Total %s Videos selected" %len(self.videos_filelist))
+        elif track:
+            if any(item in self.videos_filelist for item in self.filelist):
+                wx.MessageBox('Already selected!', 'Error', wx.OK | wx.ICON_INFORMATION)
+            else:
+                self.data_filelist += self.filelist
+                self.sel_vids_or_data.SetLabel("Total %s files of tracking data selected" %len(self.data_filelist))
+        else:
+            wx.MessageBox('Not supported', 'Error', wx.OK | wx.ICON_INFORMATION)
+        
+        if len(self.videos_filelist) > 0 and len(self.data_filelist) > 0:
+            wx.MessageBox('Cannot choose both videos and data. Please only choose one type', 'Error', wx.OK | wx.ICON_INFORMATION)
+            self.videos_filelist, self.data_filelist = [], []
+            self.sel_vids_or_data.SetLabel("Load")
+        self.filelist = []
+        self.vids_or_data = None
 
     def activate_change_wd(self,event):
         """
@@ -142,6 +157,7 @@ class CreateNewProject(wx.Panel):
 
 
     def reset_project(self,event):
-        # TODO : Resetting makes the videos disappear and reload all the stuff
-        raise NotImplementedError
+        self.data_filelist = []
+        self.video_filelist = []
+        self.sel_vids_or_data.SetLabel("Load")
 
