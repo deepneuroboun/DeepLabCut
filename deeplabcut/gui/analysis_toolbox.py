@@ -210,9 +210,9 @@ class MainFrame(wx.Frame):
 ###############################################################################################################################
 # BUTTONS FUNCTIONS FOR HOTKEYS
     def okButton(self, event):
-        res = plot_trajectories(self.config_file, self.filelist, self.options, videotype='.MP4')
-        # plot_thread = Thread(target=plotting.plot_trajectories, 
-        #         args=(self.config_file, self.filelist, self.options), 
+        res = plot_trajectories(self.config_file, self.filelist, self.cfg['options'], videotype='.MP4')
+        # plot_thread = Thread(target=plotting.plot_trajectories,
+        #         args=(self.config_file, self.filelist, self.options),
         #         kwargs={'videotype': '.MP4'})
         # plot_thread.start()
         # dlg = AnalysisDialog()
@@ -292,23 +292,32 @@ class MainFrame(wx.Frame):
 
     # Analysis Patches
     def createPatch(self, img_size):
+
         x, y, d = img_size
-        self.central_rect = patches.Rectangle((y/4, x/4), y/2, x/2, fill=False, color='w', lw=4)
-        starting_points = [(0,0), (y/2, 0), (0, x/2), (y/2,x/2)]
+        central_rect_start = eval(self.cfg['central_rect']['start'])
+        central_rect_y_len = eval(self.cfg['central_rect']['y_len'])
+        central_rect_x_len = eval(self.cfg['central_rect']['x_len'])
+        self.central_rect = patches.Rectangle(central_rect_start,
+                central_rect_y_len,
+                central_rect_x_len,
+                fill=False, color='w', lw=4)
+
+        starting_points = list(map(eval, self.cfg['quadrants']['start']))
+        quadrants_y_len = eval(self.cfg['quadrants']['y_len'])
+        quadrants_x_len = eval(self.cfg['quadrants']['x_len'])
         quadrants = []
         for starting_point in starting_points:
-            quadrants.append(patches.Rectangle(starting_point, y/2, x/2, fill=False, color='w', lw=4))
+            quadrants.append(patches.Rectangle(starting_point,
+                quadrants_y_len,
+                quadrants_x_len,
+                fill=False, color='w', lw=4))
         self.rect = PatchCollection(quadrants, match_original=True)
-        self.options = {
-                'vector-based': {
-                    'start' : [(x/2, y/2), (x/2, y/2), (x/2, y/2), (x/2, y/2)],
-                    'end' : [(0, y/2), (x/2, 0), (x, y/2), (x/2, y)]
-                    },
-                'center-based': {
-                    'start' : [(x/4, y/4), (3*x/4, y/4), (3*x/4, 3*y/4), (x/4, 3*y/4)],
-                    'end' : [(3*x/4, y/4), (3*x/4, 3*y/4), (x/4, 3*y/4), (x/4, y/4)]
-                    }
-                }
+        # Since values are too generic it should be transformed into real values
+        for analysis_type in self.cfg['options'].keys():
+            for initial in self.cfg['options'][analysis_type].keys():
+                self.cfg['options'][analysis_type][initial] = list(map(eval,
+                    self.cfg['options'][analysis_type][initial]))
+
 
 
     # Quartile Analysis showing to the plot

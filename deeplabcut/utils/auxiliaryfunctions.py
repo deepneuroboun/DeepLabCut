@@ -131,6 +131,7 @@ def read_config(configname, is_paradigm=False):
            new_path = os.path.join(cfg['project_path'], 'videos', os.path.basename(path))
            cfg['video_sets'][new_path] = vals
 
+
     return(cfg)
 
 def write_config(configname,cfg):
