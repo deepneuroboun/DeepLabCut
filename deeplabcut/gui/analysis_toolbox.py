@@ -25,8 +25,8 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from pathlib import Path
 import argparse
 from deeplabcut.generate_training_dataset import auxfun_drag_label
-from deeplabcut.utils import auxiliaryfunctions
-from deeplabcut.utils import plotting
+from deeplabcut.utils.auxiliaryfunctions import read_config
+from deeplabcut.utils.plotting import plot_trajectories
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 from deeplabcut.gui.AnalysisDialog import AnalysisDialog
@@ -210,13 +210,14 @@ class MainFrame(wx.Frame):
 ###############################################################################################################################
 # BUTTONS FUNCTIONS FOR HOTKEYS
     def okButton(self, event):
-        plot_thread = Thread(target=plotting.plot_trajectories, 
-                args=(self.config_file, self.filelist, self.options), 
-                kwargs={'videotype': '.MP4'})
-        plot_thread.start()
-        dlg = AnalysisDialog()
-        dlg.ShowModal()
-        wx.MessageBox(True, 'Info', wx.OK | wx.ICON_INFORMATION)
+        res = plot_trajectories(self.config_file, self.filelist, self.options, videotype='.MP4')
+        # plot_thread = Thread(target=plotting.plot_trajectories, 
+        #         args=(self.config_file, self.filelist, self.options), 
+        #         kwargs={'videotype': '.MP4'})
+        # plot_thread.start()
+        # dlg = AnalysisDialog()
+        # dlg.ShowModal()
+        wx.MessageBox(res, 'Info', wx.OK | wx.ICON_INFORMATION)
 
 
 
@@ -239,7 +240,7 @@ class MainFrame(wx.Frame):
         cwd = os.path.join(os.getcwd())
 
 # Reading config file and its variables
-        self.cfg = auxiliaryfunctions.read_config(self.config_file, is_paradigm=True)
+        self.cfg = read_config(self.config_file, is_paradigm=True)
         self.scorer = self.cfg['scorer']
         self.bodyparts = self.cfg['bodyparts']
         self.videos = self.cfg['video_sets'].keys()

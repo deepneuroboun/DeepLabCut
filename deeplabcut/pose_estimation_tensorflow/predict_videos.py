@@ -120,7 +120,6 @@ def analyze_videos(config, videos, videotype='avi', shuffle=1, trainingsetindex=
     --------
 
     """
-    print("Hello World!")
     if 'TF_CUDNN_USE_AUTOTUNE' in os.environ:
         del os.environ['TF_CUDNN_USE_AUTOTUNE'] #was potentially set during training
 

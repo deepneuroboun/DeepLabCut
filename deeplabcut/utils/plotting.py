@@ -255,16 +255,15 @@ def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trai
             print("The video was not analyzed with this scorer:", DLCscorer)
             analyze_videos(config, [video], videotype='.MP4')
         #LoadData
-        else:
-            print("Loading ", video, "and data.")
-            datafound,metadata,Dataframe,DLCscorer,suffix=auxiliaryfunctions.LoadAnalyzedData(str(videofolder),vname,DLCscorer,filtered) #returns boolean variable if data was found and metadata + pandas array
-            if datafound:
-                basefolder=videofolder
-                auxiliaryfunctions.attempttomakefolder(basefolder)
-                auxiliaryfunctions.attempttomakefolder(os.path.join(basefolder,'plot-poses'))
-                tmpfolder = os.path.join(basefolder,'plot-poses', vname)
-                auxiliaryfunctions.attempttomakefolder(tmpfolder)
-                PlottingResults(tmpfolder, Dataframe, DLCscorer, cfg, bodyparts, showfigures, options, suffix+'.png')
+        print("Loading ", video, "and data.")
+        datafound,metadata,Dataframe,DLCscorer,suffix=auxiliaryfunctions.LoadAnalyzedData(str(videofolder),vname,DLCscorer,filtered) #returns boolean variable if data was found and metadata + pandas array
+        if datafound:
+            basefolder=videofolder
+            auxiliaryfunctions.attempttomakefolder(basefolder)
+            auxiliaryfunctions.attempttomakefolder(os.path.join(basefolder,'plot-poses'))
+            tmpfolder = os.path.join(basefolder,'plot-poses', vname)
+            auxiliaryfunctions.attempttomakefolder(tmpfolder)
+            PlottingResults(tmpfolder, Dataframe, DLCscorer, cfg, bodyparts, showfigures, options, suffix+'.png')
     return 'Plots created! Please check the directory "plot-poses" within the video directory'
 
 
