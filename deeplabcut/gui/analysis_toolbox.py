@@ -14,6 +14,7 @@ import glob
 import cv2
 import wx
 import wx.lib.scrolledpanel as SP
+import wx.lib.agw.floatspin as fs
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -112,13 +113,18 @@ class ScrollPanel(SP.ScrolledPanel):
 
         self.quartile = wx.CheckBox(self, id=wx.ID_ANY, label = 'Quartile')
         self.center = wx.CheckBox(self, id=wx.ID_ANY, label = 'Center')
-
+        self.scaler = fs.FloatSpin(self, -1, size=(250, -1), value = 1, min_val = 0.3, max_val =1.5 , digits = 2,increment = 0.05, style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS )
+        scaler_text = wx.StaticText(self, label = "Adjust the center size")
+        self.re_center = wx.Button(self, id=wx.ID_ANY, label="Reset center to default")
         self.choiceBox.Add(self.quartile, 0, wx.ALL, 5 )
         self.choiceBox.Add(self.center, 0, wx.ALL, 5)
+        self.choiceBox.Add(scaler_text,0,wx.ALL, 5)
+        self.choiceBox.Add(self.scaler, 0, wx.ALL, 5)
+        self.choiceBox.Add(self.re_center, 0, wx.ALL, 5)
 
         self.SetSizerAndFit(self.choiceBox)
         self.Layout()
-        return(self.choiceBox,[self.quartile, self.center])
+        return(self.choiceBox,[self.quartile, self.center],self.scaler,self.re_center)
 
     def clearBoxer(self):
         self.choiceBox.Clear(True)
@@ -200,6 +206,8 @@ class MainFrame(wx.Frame):
         # xlim and ylim have actually changed before turning zoom off
         self.prezoom_xlim=[]
         self.prezoom_ylim=[]
+        global for_update
+        for_update = False
 
 # TODO: correct hardcoded part
         self.labeled_data_path = 'labeled-data/MAH00131_shortened'
@@ -271,9 +279,8 @@ class MainFrame(wx.Frame):
 # Reading the image name
         self.img = self.index[self.iter]
         img_name = Path(self.index[self.iter]).name
-        self.norm,self.colorIndex, img_size = self.image_panel.getColorIndices(self.img,self.bodyparts)
-        # In order to show the borders to the user for analysis
-        self.createPatch(img_size)
+        global img_size
+        self.norm,self.colorIndex, img_size = self.image_panel.getColorIndices(self.img,self.bodyparts)        # In order to show the borders to the user for analysis
 
 # checks for unique bodyparts
         if len(self.bodyparts)!=len(set(self.bodyparts)):
@@ -283,10 +290,17 @@ class MainFrame(wx.Frame):
         self.figure,self.axes,self.canvas,self.toolbar = self.image_panel.drawplot(self.img,img_name,self.iter,self.index,self.bodyparts,self.colormap)
 
 # the first checkbox is for quartile and the second checkbox is the central analysis
-        self.choiceBox,self.checkBoxes = self.choice_panel.addCheckButtons(self.bodyparts,self.file,self.markerSize)
+        self.choiceBox,self.checkBoxes, self.Scaler, self.Recenter = self.choice_panel.addCheckButtons(self.bodyparts,self.file,self.markerSize)
 
+        self.Scaler.Enable(False)
+        self.Recenter.Enable(False)
         self.Bind(wx.EVT_CHECKBOX, self.isQuartile, self.checkBoxes[0])
         self.Bind(wx.EVT_CHECKBOX, self.isCentral, self.checkBoxes[1])
+        self.Scaler.Bind(wx.EVT_SPINCTRL,self.updateCenter)
+        self.Recenter.Bind(wx.EVT_BUTTON,self.resetcenter)
+        self.createPatch(img_size)
+        
+
 
         self.buttonCounter = MainFrame.plot(self,self.img)
 
@@ -294,29 +308,30 @@ class MainFrame(wx.Frame):
     def createPatch(self, img_size):
 
         x, y, d = img_size
-        central_rect_start = eval(self.cfg['central_rect']['start'])
-        central_rect_y_len = eval(self.cfg['central_rect']['y_len'])
-        central_rect_x_len = eval(self.cfg['central_rect']['x_len'])
+        central_rect_start = tuple(cor/self.Scaler.GetValue() for cor in (eval(self.cfg['central_rect']['start']))) #needs to be fixed. not sure what the correct method is yet
+        central_rect_y_len = eval(self.cfg['central_rect']['y_len']) * self.Scaler.GetValue()  
+        central_rect_x_len = eval(self.cfg['central_rect']['x_len']) * self.Scaler.GetValue()
         self.central_rect = patches.Rectangle(central_rect_start,
                 central_rect_y_len,
                 central_rect_x_len,
                 fill=False, color='w', lw=4)
 
-        starting_points = list(map(eval, self.cfg['quadrants']['start']))
-        quadrants_y_len = eval(self.cfg['quadrants']['y_len'])
-        quadrants_x_len = eval(self.cfg['quadrants']['x_len'])
-        quadrants = []
-        for starting_point in starting_points:
-            quadrants.append(patches.Rectangle(starting_point,
-                quadrants_y_len,
-                quadrants_x_len,
-                fill=False, color='w', lw=4))
-        self.rect = PatchCollection(quadrants, match_original=True)
-        # Since values are too generic it should be transformed into real values
-        for analysis_type in self.cfg['options'].keys():
-            for initial in self.cfg['options'][analysis_type].keys():
-                self.cfg['options'][analysis_type][initial] = list(map(eval,
-                    self.cfg['options'][analysis_type][initial]))
+        if not for_update:
+            starting_points = list(map(eval, self.cfg['quadrants']['start']))
+            quadrants_y_len = eval(self.cfg['quadrants']['y_len'])
+            quadrants_x_len = eval(self.cfg['quadrants']['x_len'])
+            quadrants = []
+            for starting_point in starting_points:
+                quadrants.append(patches.Rectangle(starting_point,
+                    quadrants_y_len,
+                    quadrants_x_len,
+                    fill=False, color='w', lw=4))
+            self.rect = PatchCollection(quadrants, match_original=True)
+            # Since values are too generic it should be transformed into real values
+            for analysis_type in self.cfg['options'].keys():
+                for initial in self.cfg['options'][analysis_type].keys():
+                    self.cfg['options'][analysis_type][initial] = list(map(eval,
+                        self.cfg['options'][analysis_type][initial]))
 
 
 
@@ -336,11 +351,30 @@ class MainFrame(wx.Frame):
         curBox = evt.GetEventObject()
         if(curBox.IsChecked()):
             self.axes.add_patch(self.central_rect)
+            self.Scaler.Enable(True)
+            self.Recenter.Enable(True)
         else:
             self.central_rect.remove()
+            self.Scaler.Enable(False)
+            self.Recenter.Enable(False)
         self.figure.canvas.draw()
 
-
+    
+    def updateCenter(self,event):
+        self.central_rect.remove()
+        global for_update
+        for_update = True
+        self.createPatch(img_size)
+        self.axes.add_patch(self.central_rect)
+        self.figure.canvas.draw()
+    def resetcenter(self,event):
+        global for_update
+        for_update=True
+        self.Scaler.SetToDefaultValue()
+        self.central_rect.remove()
+        self.createPatch(img_size)
+        self.axes.add_patch(self.central_rect)
+        self.figure.canvas.draw()
     def getLabels(self,img_index):
         """
         Returns a list of x and y labels of the corresponding image index
