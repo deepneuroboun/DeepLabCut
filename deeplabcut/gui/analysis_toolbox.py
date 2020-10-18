@@ -206,8 +206,6 @@ class MainFrame(wx.Frame):
         # xlim and ylim have actually changed before turning zoom off
         self.prezoom_xlim=[]
         self.prezoom_ylim=[]
-        global for_update
-        for_update = False
 
 # TODO: correct hardcoded part
         self.labeled_data_path = 'labeled-data/MAH00131_shortened'
@@ -279,8 +277,7 @@ class MainFrame(wx.Frame):
 # Reading the image name
         self.img = self.index[self.iter]
         img_name = Path(self.index[self.iter]).name
-        global img_size
-        self.norm,self.colorIndex, img_size = self.image_panel.getColorIndices(self.img,self.bodyparts)        # In order to show the borders to the user for analysis
+        self.norm,self.colorIndex, self.img_size = self.image_panel.getColorIndices(self.img,self.bodyparts)        # In order to show the borders to the user for analysis
 
 # checks for unique bodyparts
         if len(self.bodyparts)!=len(set(self.bodyparts)):
@@ -298,40 +295,49 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_CHECKBOX, self.isCentral, self.checkBoxes[1])
         self.Scaler.Bind(wx.EVT_SPINCTRL,self.updateCenter)
         self.Recenter.Bind(wx.EVT_BUTTON,self.resetcenter)
-        self.createPatch(img_size)
+        self.createPatch()
         
 
 
         self.buttonCounter = MainFrame.plot(self,self.img)
 
     # Analysis Patches
-    def createPatch(self, img_size):
+    def createPatch(self):
+        self.createCenter()
+        self.createQuartile()
 
-        x, y, d = img_size
-        central_rect_start = tuple(cor/self.Scaler.GetValue() for cor in (eval(self.cfg['central_rect']['start']))) #needs to be fixed. not sure what the correct method is yet
+    def createCenter(self):
+
+        x, y, d = self.img_size
         central_rect_y_len = eval(self.cfg['central_rect']['y_len']) * self.Scaler.GetValue()  
         central_rect_x_len = eval(self.cfg['central_rect']['x_len']) * self.Scaler.GetValue()
+
+        # Assumption : The maze center is at the center of the image
+        central_rect_start = (x/2 - central_rect_x_len / 2, y/2 - central_rect_y_len / 2 )
+
         self.central_rect = patches.Rectangle(central_rect_start,
                 central_rect_y_len,
                 central_rect_x_len,
                 fill=False, color='w', lw=4)
 
-        if not for_update:
-            starting_points = list(map(eval, self.cfg['quadrants']['start']))
-            quadrants_y_len = eval(self.cfg['quadrants']['y_len'])
-            quadrants_x_len = eval(self.cfg['quadrants']['x_len'])
-            quadrants = []
-            for starting_point in starting_points:
-                quadrants.append(patches.Rectangle(starting_point,
-                    quadrants_y_len,
-                    quadrants_x_len,
-                    fill=False, color='w', lw=4))
-            self.rect = PatchCollection(quadrants, match_original=True)
-            # Since values are too generic it should be transformed into real values
-            for analysis_type in self.cfg['options'].keys():
-                for initial in self.cfg['options'][analysis_type].keys():
-                    self.cfg['options'][analysis_type][initial] = list(map(eval,
-                        self.cfg['options'][analysis_type][initial]))
+    def createQuartile(self):
+
+        x, y, d = self.img_size
+        starting_points = list(map(eval, self.cfg['quadrants']['start']))
+        quadrants_y_len = eval(self.cfg['quadrants']['y_len'])
+        quadrants_x_len = eval(self.cfg['quadrants']['x_len'])
+        quadrants = []
+        for starting_point in starting_points:
+            quadrants.append(patches.Rectangle(starting_point,
+                quadrants_y_len,
+                quadrants_x_len,
+                fill=False, color='w', lw=4))
+        self.rect = PatchCollection(quadrants, match_original=True)
+        # Since values are too generic it should be transformed into real values
+        for analysis_type in self.cfg['options'].keys():
+            for initial in self.cfg['options'][analysis_type].keys():
+                self.cfg['options'][analysis_type][initial] = list(map(eval,
+                    self.cfg['options'][analysis_type][initial]))
 
 
 
@@ -362,19 +368,17 @@ class MainFrame(wx.Frame):
     
     def updateCenter(self,event):
         self.central_rect.remove()
-        global for_update
-        for_update = True
-        self.createPatch(img_size)
+        self.createCenter()
         self.axes.add_patch(self.central_rect)
         self.figure.canvas.draw()
+
     def resetcenter(self,event):
-        global for_update
-        for_update=True
         self.Scaler.SetToDefaultValue()
         self.central_rect.remove()
-        self.createPatch(img_size)
+        self.createCenter()
         self.axes.add_patch(self.central_rect)
         self.figure.canvas.draw()
+
     def getLabels(self,img_index):
         """
         Returns a list of x and y labels of the corresponding image index
