@@ -1,4 +1,4 @@
-# How To Install DeepLabCut2.x+:
+# How To Install DeepLabCut: <img src="https://images.squarespace-cdn.com/content/v1/57f6d51c9f74566f55ecf271/1596384349316-DO2TSCP8SNJPNH0Q7M17/ke17ZwdGBToddI8pDm48kAUs_xhejcPdACkit3Uqn_MUqsxRUqqbr1mOJYKfIPR7XwrA8kppQOKviAkmJK9CHboFd9iwF0xUPsKoMZ8qyy7TTjtF1zbdWMJZqACxENLyMcoqmXUBolG7AqSytomVKo_4jSo_Wf4R8oUF5rEzd3E/installOverview.png?format=1000w" width="250" title="DLC" alt="DLC" align="right" vspace = "50">
 
 DeepLabCut can be run on Windows, Linux, or MacOS (see more details at [technical considerations](/docs/installation.md#technical-considerations)). 
 
@@ -10,7 +10,7 @@ DeepLabCut can be run on Windows, Linux, or MacOS (see more details at [technica
  
 Anaconda is perhaps the easiest way to install Python and additional packages across various operating systems. With Anaconda you create all the dependencies in an [environment](https://conda.io/docs/user-guide/tasks/manage-environments.html) on your machine. 
 
-## Step 2: [Easy install for Windows, MacOS, Ubuntu: please use our supplied Anaconda environments](https://github.com/AlexEMG/DeepLabCut/blob/master/conda-environments/README.md).
+## Step 2: [Easy install: please use our supplied Anaconda environments](https://github.com/AlexEMG/DeepLabCut/blob/master/conda-environments/README.md).
 Please click [here](https://github.com/AlexEMG/DeepLabCut/blob/master/conda-environments/README.md) to get these files (and more info). 
 
 **CRITICAL:** If you have a GPU, you should FIRST then **install the NVIDIA CUDA (10 or LOWER) package and an appropriate driver for your specific GPU**, then you can use the supplied conda file. Please follow the instructions found here https://www.tensorflow.org/install/gpu, and more tips below, to install the correct version of CUDA and your graphic card driver. The order of operations matters.
@@ -18,7 +18,7 @@ Please click [here](https://github.com/AlexEMG/DeepLabCut/blob/master/conda-envi
 ### The most common "new user" hurdle is installing and using your GPU:
 - Here we provide notes on how to install and check your GPU use with TensorFlow (which is used by DeepLabCut and already installed with the Anaconda files above). Thus, you do not need to independently install tensorflow.
 
-In the Nature Neuroscience paper, we used **TensorFlow 1.0 with CUDA (Cuda 8.0)**; in the Nature Protocols paper, we tested up through **TensorFlow 1.14 with CUDA 10**. Some other versions of TensorFlow have been tested (i.e. these versions have been tested 1.2, 1.4, 1.8 and 1.10-1.14, but might require different CUDA versions - CUDA 10.1+ is NOT supported)! Currently, TensorFlow 2.0 is not supported. Please check your driver/cuDNN/CUDA/TensorFlow versions [on this StackOverflow post](https://stackoverflow.com/questions/30820513/what-is-version-of-cuda-for-nvidia-304-125/30820690#30820690).
+In the Nature Neuroscience paper, we used **TensorFlow 1.0 with CUDA (Cuda 8.0)**; in the Nature Protocols paper, we tested up through **TensorFlow 1.14 with CUDA 10**. Some other versions of TensorFlow have been tested (i.e. these versions have been tested 1.2, 1.4, 1.8 and 1.10-1.14, but might require different CUDA versions - CUDA 10.+ is NOT supported)! Currently, TensorFlow 2.0 is not supported. Please check your driver/cuDNN/CUDA/TensorFlow versions [on this StackOverflow post](https://stackoverflow.com/questions/30820513/what-is-version-of-cuda-for-nvidia-304-125/30820690#30820690).
 
 **Currently, TensorFlow 2.X is NOT supported!**
 
@@ -86,7 +86,7 @@ If you perform the system-wide installation, and the computer has other Python p
 
 - Computer:
 
-     - For reference, we use e.g. Dell workstations (79xx series) with **Ubuntu 16.04 LTS or 18.04 LTS** and run a Docker container that has TensorFlow, etc. installed (https://github.com/MMathisLab/Docker4DeepLabCut2.0).
+     - For reference, we use e.g. Dell workstations (79xx series) with **Ubuntu 16.04 LTS or 18.04 LTS** and run a Docker container that has TensorFlow, etc. installed (https://github.com/DeepLabCut/Docker4DeepLabCut2.0).
 
 - Computer Hardware:
      - Ideally, you will use a strong GPU with at least 8GB memory such as the [NVIDIA GeForce 1080 Ti or 2080 Ti](https://www.nvidia.com/en-us/shop/geforce/?page=1&limit=9&locale=en-us).  A GPU is not necessary, but on a CPU the (training and evaluation) code is considerably slower (10x) for ResNets, but MobileNets are faster (see WIKI). You might also consider using cloud computing services like [Google cloud/amazon web services](https://github.com/AlexEMG/DeepLabCut/issues/47) or Google Colaboratory.
