@@ -66,30 +66,10 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
         xValues = Dataframe[scorer][bp]['x'].values[filtered_index]
         yValues = Dataframe[scorer][bp]['y'].values[filtered_index]
         bases = []
-        region_cnt = len(vector_based['start'])
         for elem in zip(xValues, yValues):
-            for i in range(region_cnt):
-                fi_v_x, fi_v_y = vector_based['end'][i]
-                fi_v_x = fi_v_x - vector_based['start'][i][0]
-                fi_v_y = fi_v_y - vector_based['start'][i][1]
+            for i in range(0):
+                # TODO: write the proper region control
 
-                t_v_x = elem[0] - vector_based['start'][i][0]
-                t_v_y = elem[1] - vector_based['start'][i][1]
-
-                fi_res = vec_p(fi_v_x, fi_v_y, t_v_x, t_v_y)
-
-                se_v_x, se_v_y = vector_based['end'][(i+1) % region_cnt]
-                se_v_x = se_v_x -  vector_based['start'][(i+1) % region_cnt][0]
-                se_v_y = se_v_y - vector_based['start'][(i+1) % region_cnt][1]
-
-                t_v_x = elem[0] - vector_based['start'][(i+1) % region_cnt][0]
-                t_v_y = elem[1] - vector_based['start'][(i+1) % region_cnt][1]
-
-                se_res = vec_p(se_v_x, se_v_y, t_v_x, t_v_y)
-
-                if fi_res > 0 and se_res < 0:
-                    bases.append(i+1)
-                    break
         #TODO: change hardcoded base labels below
         filtered_dataframe['bases'] = bases
         filtered_dataframe.loc[filtered_dataframe['bases']==1,'bases'] = "I"
@@ -102,8 +82,6 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
                 y="Seconds")
         )
         p.save(os.path.join(tmpfolder,"regions"+suffix), dpi=1000)
-        break
-    print("First Part Completed!")
 
 
 

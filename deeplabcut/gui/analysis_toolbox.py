@@ -315,8 +315,15 @@ class MainFrame(wx.Frame):
 
     # Analysis Patches
     def createPatch(self):
-        self.createCenter()
+        x, y, d = self.img_size
         self.createQuartile()
+        self.createCenter()
+        # Since values are too generic it should be transformed into real values
+        for analysis_type in self.cfg['options'].keys():
+            for initial in self.cfg['options'][analysis_type].keys():
+                self.cfg['options'][analysis_type][initial] = list(map(eval,
+                                                                       self.cfg['options'][analysis_type][initial]))
+        import pdb; pdb.set_trace()
 
     def createCenter(self):
 
@@ -334,6 +341,9 @@ class MainFrame(wx.Frame):
                                               central_rect_y_len,
                                               central_rect_x_len,
                                               fill=False, color='w', lw=4)
+        cr = self.central_rect
+        cr_vertices = cr.get_patch_transform().transform(cr.get_path().vertices[:-1])
+        self.cfg['options']['center-based']['center'] = list(map(tuple, cr_vertices.tolist()))
 
     def createQuartile(self):
 
@@ -354,11 +364,6 @@ class MainFrame(wx.Frame):
         self.axes.text(30, 420, 'IV', fontsize=30, color='white')
         for text in self.axes.texts:
             text.set_visible(False)
-        # Since values are too generic it should be transformed into real values
-        for analysis_type in self.cfg['options'].keys():
-            for initial in self.cfg['options'][analysis_type].keys():
-                self.cfg['options'][analysis_type][initial] = list(map(eval,
-                                                                       self.cfg['options'][analysis_type][initial]))
 
     # Quartile Analysis showing to the plot
 
