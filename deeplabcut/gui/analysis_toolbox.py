@@ -333,6 +333,12 @@ class MainFrame(wx.Frame):
                 quadrants_x_len,
                 fill=False, color='w', lw=4))
         self.rect = PatchCollection(quadrants, match_original=True)
+        self.axes.text(30,30, 'I', fontsize = 30, color = 'white')
+        self.axes.text(430,30, 'II', fontsize = 30, color = 'white')
+        self.axes.text(420,420, 'III', fontsize = 30, color = 'white')
+        self.axes.text(30,420, 'IV', fontsize = 30, color = 'white')
+        for text in self.axes.texts:
+            text.set_visible(False)
         # Since values are too generic it should be transformed into real values
         for analysis_type in self.cfg['options'].keys():
             for initial in self.cfg['options'][analysis_type].keys():
@@ -346,8 +352,12 @@ class MainFrame(wx.Frame):
         curBox = evt.GetEventObject()
         if(curBox.IsChecked()):
             self.axes.add_collection(self.rect)
+            for text in self.axes.texts:
+                text.set_visible(True)
         else:
             self.rect.remove()
+            for text in self.axes.texts:
+                text.set_visible(False)
         self.figure.canvas.draw()
 
 
