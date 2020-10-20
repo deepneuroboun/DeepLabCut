@@ -316,14 +316,12 @@ class MainFrame(wx.Frame):
     # Analysis Patches
     def createPatch(self):
         x, y, d = self.img_size
-        self.createQuartile()
-        self.createCenter()
         # Since values are too generic it should be transformed into real values
         for analysis_type in self.cfg['options'].keys():
             for initial in self.cfg['options'][analysis_type].keys():
-                self.cfg['options'][analysis_type][initial] = list(map(eval,
-                                                                       self.cfg['options'][analysis_type][initial]))
-        import pdb; pdb.set_trace()
+                self.cfg['options'][analysis_type][initial] = list(map(eval, self.cfg['options'][analysis_type][initial]))
+        self.createQuartile()
+        self.createCenter()
 
     def createCenter(self):
 
@@ -358,10 +356,14 @@ class MainFrame(wx.Frame):
                                                quadrants_x_len,
                                                fill=False, color='w', lw=4))
         self.rect = PatchCollection(quadrants, match_original=True)
-        self.axes.text(30, 30, 'I', fontsize=30, color='white')
-        self.axes.text(430, 30, 'II', fontsize=30, color='white')
-        self.axes.text(420, 420, 'III', fontsize=30, color='white')
-        self.axes.text(30, 420, 'IV', fontsize=30, color='white')
+        regions = self.cfg['options']['vector-based'].keys()
+        # TODO: needs dynamic x and y positions for labels
+        x = [100, 350, 350, 100]
+        y = [100, 100, 350, 350]
+
+        for region in zip(x,y,regions):
+            x, y, label = region
+            self.axes.text(x, y, label, fontsize=30, color='white')
         for text in self.axes.texts:
             text.set_visible(False)
 

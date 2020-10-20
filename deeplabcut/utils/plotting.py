@@ -36,8 +36,23 @@ def Histogram(vector,color,bins):
     plt.hist(dvector,color=color,histtype='step',bins=bins)
 #    fig.colorbar(im, ax=ax)
 
-def vec_p(x1, y1, x2, y2):
+def vec_p(v1, v2):
+    x1, y1 = v1
+    x2, y2 = v2
     return x1 * y2 - y1 * x2
+
+
+def in_region(region, target):
+    vec_size = len(region)
+    tx, ty = target
+    for i in range(vec_size):
+        start_x, start_y = region[i]
+        end_x, end_y = region[(i+1) % vec_size]
+        v1 = (end_x - start_x, end_y - start_y)
+        v2 = (tx - start_x, ty - start_y)
+        if vec_p(v1, v2) < 0:
+            return False
+    return True
 
 def cm_pix_ratio(cfg):
     height = cfg['height']
@@ -65,23 +80,26 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
         # Keep this part until optimization
         xValues = Dataframe[scorer][bp]['x'].values[filtered_index]
         yValues = Dataframe[scorer][bp]['y'].values[filtered_index]
-        bases = []
-        for elem in zip(xValues, yValues):
-            for i in range(0):
-                # TODO: write the proper region control
-
-        #TODO: change hardcoded base labels below
-        filtered_dataframe['bases'] = bases
-        filtered_dataframe.loc[filtered_dataframe['bases']==1,'bases'] = "I"
-        filtered_dataframe.loc[filtered_dataframe['bases']==2,'bases'] = "II"
-        filtered_dataframe.loc[filtered_dataframe['bases']==3,'bases'] = "III"
-        filtered_dataframe.loc[filtered_dataframe['bases']==4,'bases'] = "IV"
-        p = (ggplot(filtered_dataframe, aes(x='bases', y='stat(count/FPS)'))  + geom_histogram(binwidth=.5) +
-            labels.labs(title = "Time Spent in Each Region",
-                x="Region",
-                y="Seconds")
-        )
-        p.save(os.path.join(tmpfolder,"regions"+suffix), dpi=1000)
+        for analysis in options.keys():
+            bases = []
+            for elem in zip(xValues, yValues):
+                index = -1
+                for region in options[analysis].keys():
+                    if (in_region(options[analysis][region], elem)):
+                        bases.append(region)
+                        index = region
+                        break
+                # TODO: needs some adjustments for inside-outside of regions
+                if index == -1:
+                    bases.append('peripheral')
+            filtered_dataframe['bases'] = bases
+            p = (ggplot(filtered_dataframe, aes(x='bases', y='stat(count/FPS)'))  + geom_histogram(binwidth=.5) +
+                labels.labs(title = "Time Spent in Each Region",
+                    x="Region",
+                    y="Seconds")
+            )
+            p.save(os.path.join(tmpfolder,"regions-"+analysis+suffix), dpi=1000)
+        break
 
 
 
