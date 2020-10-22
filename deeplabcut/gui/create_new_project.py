@@ -38,6 +38,7 @@ class CreateNewProject(wx.Panel):
         self.copy = False
         self.config = os.path.join(PARADIGM_PATH, cur_paradigm, 'config.yaml')
         self.loaded = False
+        self.cur_paradigm = cur_paradigm
 
         # design the panel
         self.sizer = wx.GridBagSizer(10, 15)
@@ -153,7 +154,7 @@ class CreateNewProject(wx.Panel):
             cur_list = self.data_filelist
         if (self.videos_filelist):
             cur_list = self.videos_filelist
-        analysis_toolbox.show(self.config, cur_list)
+        analysis_toolbox.show(self.config, self.cur_paradigm, cur_list)
 
 
     def reset_project(self,event):

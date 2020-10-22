@@ -39,8 +39,8 @@ class Welcome(wx.Panel):
         main_sizer.Add(self.proj_name, proportion=3, flag=wx.EXPAND, border=10)
 
         # Experimental Paradigms
-        lines = [["OFT", "EPM"], ["FST", "WYM"]]
-        is_active = [[True, False],[False, False]]
+        lines = [["OFT", "EPM"], ["WYM", "MWM", "FST"]]
+        is_active = [[True, False],[False, True, False]]
         line_sizers = [None] * len(lines)
 
         for i, line in enumerate(lines):

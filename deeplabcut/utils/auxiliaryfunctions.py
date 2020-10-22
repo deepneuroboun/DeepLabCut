@@ -126,10 +126,11 @@ def read_config(configname, is_paradigm=False):
         raise FileNotFoundError ("Config file is not found. Please make sure that the file exists and/or that you passed the path of the config file correctly!")
     if (is_paradigm):
         cfg['project_path'] = os.path.dirname(path)
+        new_sets = {}
         for path, vals in cfg['video_sets'].items():
-           del cfg['video_sets'][path]
            new_path = os.path.join(cfg['project_path'], 'videos', os.path.basename(path))
-           cfg['video_sets'][new_path] = vals
+           new_sets[new_path] = vals
+        cfg['video_sets'] = new_sets
 
 
     return(cfg)

@@ -106,19 +106,23 @@ class ScrollPanel(SP.ScrolledPanel):
     def on_focus(self, event):
         pass
 
-    def addCheckButtons(self, bodyparts, fileIndex, markersize):
+    def addCheckButtons(self, paradigm):
         """
         Adds radio buttons for each bodypart on the right panel
         """
+        if paradigm == 'OFT':
+            center_label = 'Center'
+        if paradigm == 'MWM':
+            center_label = 'Target'
         self.choiceBox = wx.BoxSizer(wx.VERTICAL)
 
         self.quartile = wx.CheckBox(self, id=wx.ID_ANY, label='Quartile')
-        self.center = wx.CheckBox(self, id=wx.ID_ANY, label='Center')
+        self.center = wx.CheckBox(self, id=wx.ID_ANY, label=center_label)
         self.scaler = fs.FloatSpin(self, -1, size=(250, -1), value=1, min_val=0.3, max_val=1.5,
                                    digits=2, increment=0.05, style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
-        scaler_text = wx.StaticText(self, label="Adjust the center size")
+        scaler_text = wx.StaticText(self, label="Adjust the " + center_label + " size")
         self.re_center = wx.Button(
-            self, id=wx.ID_ANY, label="Reset center to default")
+            self, id=wx.ID_ANY, label="Reset " + center_label + " to default")
         self.choiceBox.Add(self.quartile, 0, wx.ALL, 5)
         self.choiceBox.Add(self.center, 0, wx.ALL, 5)
         self.choiceBox.Add(scaler_text, 0, wx.ALL, 5)
@@ -136,7 +140,7 @@ class ScrollPanel(SP.ScrolledPanel):
 class MainFrame(wx.Frame):
     """Contains the main GUI and button boxes"""
 
-    def __init__(self, parent, config, filelist):
+    def __init__(self, parent, config, paradigm, filelist):
         # Settting the GUI size and panels design
         # Gets the number of displays
         displays = (wx.Display(i) for i in range(wx.Display.GetCount()))
@@ -216,10 +220,9 @@ class MainFrame(wx.Frame):
         self.prezoom_xlim = []
         self.prezoom_ylim = []
 
-# TODO: correct hardcoded part
-        self.labeled_data_path = 'labeled-data/MAH00131_shortened'
 
 # Preview Image
+        self.paradigm = paradigm
         self.previewImage()
 
 ###############################################################################################################################
@@ -261,7 +264,9 @@ class MainFrame(wx.Frame):
         self.colormap = plt.get_cmap(self.cfg['colormap'])
         self.colormap = self.colormap.reversed()
         self.project_path = self.cfg['project_path']
-        self.dir = os.path.join(self.project_path, self.labeled_data_path)
+
+        self.labeled_data_path = os.listdir(os.path.join(self.cfg['project_path'], 'labeled-data'))[0]
+        self.dir = os.path.join(self.project_path, 'labeled-data', self.labeled_data_path)
         self.index = np.sort([fn for fn in glob.glob(
             os.path.join(self.dir, '*.png')) if ('labeled.png' not in fn)])
         self.statusbar.SetStatusText(
@@ -300,9 +305,8 @@ class MainFrame(wx.Frame):
             self.img, img_name, self.iter, self.index, self.bodyparts, self.colormap)
 
 # the first checkbox is for quartile and the second checkbox is the central analysis
-        self.choiceBox, self.checkBoxes, self.Scaler, self.Recenter = self.choice_panel.addCheckButtons(
-            self.bodyparts, self.file, self.markerSize)
-
+# This the part in order to activate different paradigms (OFT, MWM)
+        self.choiceBox, self.checkBoxes, self.Scaler, self.Recenter = self.choice_panel.addCheckButtons(self.paradigm)
         self.Scaler.Enable(False)
         self.Recenter.Enable(False)
         self.Bind(wx.EVT_CHECKBOX, self.isQuartile, self.checkBoxes[0])
@@ -331,9 +335,10 @@ class MainFrame(wx.Frame):
         central_rect_x_len = eval(
             self.cfg['central_rect']['x_len']) * self.Scaler.GetValue()
 
+        central_x, central_y = tuple(eval(self.cfg['central_rect']['start']))
         # Assumption : The maze center is at the center of the image
-        central_rect_start = (x/2 - central_rect_x_len / 2,
-                              y/2 - central_rect_y_len / 2)
+        central_rect_start = (central_x - central_rect_x_len / 2,
+                              central_y - central_rect_y_len / 2)
 
         self.central_rect = patches.Rectangle(central_rect_start,
                                               central_rect_y_len,
@@ -358,8 +363,8 @@ class MainFrame(wx.Frame):
         self.rect = PatchCollection(quadrants, match_original=True)
         regions = self.cfg['options']['vector-based'].keys()
         # TODO: needs dynamic x and y positions for labels
-        x = [100, 350, 350, 100]
-        y = [100, 100, 350, 350]
+        x = [150, 450, 450, 150]
+        y = [150, 150, 450, 450]
 
         for region in zip(x,y,regions):
             x, y, label = region
@@ -445,7 +450,7 @@ class MainFrame(wx.Frame):
         return(self.buttonCounter)
 
 
-def show(config, files=[]):
+def show(config, paradigm, files=[]):
     app = wx.App()
-    frame = MainFrame(None, config, files).Show()
+    frame = MainFrame(None, config, paradigm, files).Show()
     app.MainLoop()
