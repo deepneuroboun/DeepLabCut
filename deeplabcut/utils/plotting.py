@@ -20,6 +20,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from plotnine import ggplot, geom_point, aes, geom_histogram, labels
 import os
+import pandas as pd
 
 # TODO: change hard coded FPS
 FPS=24.99
@@ -72,34 +73,45 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
     colors = get_cmap(len(bodyparts2plot),name = cfg['colormap'])
     alphavalue = cfg['alphavalue']
 
-    # Vector based rectangular calculation
-    vector_based = options['vector-based']
-    for bpindex, bp in enumerate(bodyparts2plot):
+
+    bases_quartile = pd.DataFrame(np.zeros((len(Dataframe),len(bodyparts2plot))),columns = bodyparts2plot)
+    bases_center = bases_quartile
+    for bp in (bodyparts2plot):
         filtered_index = Dataframe[scorer][bp]['likelihood'].values > pcutoff
         filtered_dataframe = Dataframe[scorer][bp][filtered_index]
         # Keep this part until optimization
         xValues = Dataframe[scorer][bp]['x'].values[filtered_index]
         yValues = Dataframe[scorer][bp]['y'].values[filtered_index]
         for analysis in options.keys():
-            bases = []
+            cur_row = 0
             for elem in zip(xValues, yValues):
                 index = -1
                 for region in options[analysis].keys():
                     if (in_region(options[analysis][region], elem)):
-                        bases.append(region)
+                        if analysis == 'vector-based':
+                            bases_quartile.loc[cur_row,bp] = region
+                        else:
+                            bases_center.loc[cur_row,bp] = region
                         index = region
-                        break
                 # TODO: needs some adjustments for inside-outside of regions
                 if index == -1:
-                    bases.append('peripheral')
-            filtered_dataframe['bases'] = bases
-            p = (ggplot(filtered_dataframe, aes(x='bases', y='stat(count/FPS)'))  + geom_histogram(binwidth=.5) +
-                labels.labs(title = "Time Spent in Each Region",
-                    x="Region",
-                    y="Seconds")
+                    bases_center.loc[cur_row,bp] = 'peripheral'
+                cur_row += 1
+    
+    to_plot = [[],[]]
+    all_ROI = [bases_quartile,bases_center]
+    plt_names = ["quartile","central"]
+    for each in all_ROI:
+        for row in range(len(each)):
+            to_add = each.iloc[row].mode()[0]
+            to_plot[all_ROI.index(each)].append(to_add)
+        each["plot count"] = to_plot[all_ROI.index(each)]
+        p = (ggplot(each, aes(x='plot count', y='stat(count/FPS)'))  + geom_histogram(binwidth=.5) +
+            labels.labs(title = "Time Spent in Each Region",
+            x="Region",
+            y="Seconds")
             )
-            p.save(os.path.join(tmpfolder,"regions-"+analysis+suffix), dpi=1000)
-        break
+        p.save(os.path.join(tmpfolder,"regions-"+plt_names[all_ROI.index(each)]+suffix), dpi=1000)
 
 
 
