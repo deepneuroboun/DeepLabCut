@@ -34,7 +34,7 @@ class PlotNotebook(wx.Panel):
     def add(self, name='plot'):
         page = Plot(self.nb)
         self.nb.AddPage(page, name)
-        return page.figure, page.canvas
+        return page.figure
 
 
 def line_select_callback(eclick, erelease):
@@ -51,13 +51,12 @@ def demo():
     app = wx.App()
     frame = wx.Frame(None, -1, 'Plotter')
     plotter = PlotNotebook(frame)
-    fig, canvas = plotter.add('figure 1')
+    fig = plotter.add('figure 1')
     axes = fig.gca()
 
     image_source = ".\\media\\dlc_1-01.png"
     img = mpimg.imread(image_source)
     axes.imshow(img)
-    # axes.axis('off')
     selector.RS = RectangleSelector(axes, line_select_callback,
                                     drawtype='box', useblit=True, button=[1, 3], minspanx=5, minspany=5, spancoords='pixels', interactive=True)
 
