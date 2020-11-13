@@ -9,10 +9,9 @@ Licensed under GNU Lesser General Public License v3.0
 
 """
 
+import os
 import wx
-import os,sys,pydoc,platform
 import deeplabcut
-import sys
 from deeplabcut.gui import analysis_toolbox
 
 deeplabcut_root = os.path.dirname(deeplabcut.__path__[0])
@@ -101,7 +100,7 @@ class CreateNewProject(wx.Panel):
         """
         Selects the videos or the tracking data from the directory
         """
-        cwd = os.getcwd()
+        cwd = os.path.expanduser('~')
         dlg = wx.FileDialog(self, "Select videos or tracking data to add to the project", cwd, "", "*.*", wx.FD_MULTIPLE)
         if dlg.ShowModal() == wx.ID_OK:
             self.vids_or_data = dlg.GetPaths()
@@ -131,15 +130,6 @@ class CreateNewProject(wx.Panel):
         self.filelist = []
         self.vids_or_data = None
 
-    def activate_change_wd(self,event):
-        """
-        Activates the option to change the working directory
-        """
-        self.change_wd = event.GetEventObject()
-        if self.change_wd.GetValue() == True:
-            self.sel_wd.Enable(True)
-        else:
-            self.sel_wd.Enable(False)
 
     def select_working_dir(self,event):
         cwd = os.getcwd()
@@ -159,6 +149,6 @@ class CreateNewProject(wx.Panel):
 
     def reset_project(self,event):
         self.data_filelist = []
-        self.video_filelist = []
+        self.videos_filelist = []
         self.sel_vids_or_data.SetLabel("Load")
 

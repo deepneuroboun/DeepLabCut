@@ -9,9 +9,9 @@ Licensed under GNU Lesser General Public License v3.0
 
 """
 
+import os
 import wx
 import wx.adv
-import os
 import deeplabcut
 from deeplabcut.gui.create_new_project import CreateNewProject
 
