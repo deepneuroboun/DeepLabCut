@@ -28,6 +28,7 @@ class Welcome(wx.Panel):
         w=gui_size[1]
         wx.Panel.__init__(self, parent, -1,style=wx.SUNKEN_BORDER,size=(h,w))
 
+        self.opened_paradigms = {}
 ##         design the panel
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         #if editing this text make sure you add the '\n' to get the new line. The sizer is unable to format lines correctly.
@@ -76,10 +77,17 @@ class Welcome(wx.Panel):
         main_sizer.Fit(self)
 
     def goto_paradigm(self, event):
+        """
+        docstring
+        """
         cur_notebook = self.parent
         btn = event.GetEventObject()
+        cur_paradigm = btn.GetLabelText()
+        if self.opened_paradigms.get(cur_paradigm):
+            self.parent.SetSelection(self.opened_paradigms[cur_paradigm])
+            return
         paradigm_page = CreateNewProject(cur_notebook, self.gui_size, btn.GetLabelText())
-        cur_notebook.AddPage(paradigm_page, btn.GetLabelText())
-        self.parent.SetSelection(1)
+        cur_notebook.AddPage(paradigm_page, btn.GetLabelText(), select=True)
+        self.opened_paradigms[cur_paradigm] = cur_notebook.GetPageCount() - 1
 
 
