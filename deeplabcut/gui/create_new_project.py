@@ -144,7 +144,7 @@ class CreateNewProject(wx.Panel):
             cur_list = self.data_filelist
         if (self.videos_filelist):
             cur_list = self.videos_filelist
-        analysis_toolbox.show(self.config, self.cur_paradigm, cur_list)
+        analysis_toolbox.show(self.config, self.cur_paradigm, cur_list, wx.GetTopLevelParent(self))
 
 
     def reset_project(self,event):

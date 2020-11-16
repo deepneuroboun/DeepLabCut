@@ -450,7 +450,5 @@ class MainFrame(wx.Frame):
         return(self.buttonCounter)
 
 
-def show(config, paradigm, files=[]):
-    app = wx.App()
-    frame = MainFrame(None, config, paradigm, files).Show()
-    app.MainLoop()
+def show(config, paradigm, files=[], parent=None):
+    frame = MainFrame(parent, config, paradigm, files).Show()
