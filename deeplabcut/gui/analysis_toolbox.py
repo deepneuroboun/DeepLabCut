@@ -22,74 +22,17 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.collections import PatchCollection
 import matplotlib.colors as mcolors
+import matplotlib.image as mpimg
 import matplotlib
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from deeplabcut.generate_training_dataset import auxfun_drag_label
 from deeplabcut.utils.auxiliaryfunctions import read_config
 from deeplabcut.utils.plotting import plot_trajectories
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
+from deeplabcut.gui.matplotlib_cropper import Plot
 
 # ###########################################################################
 # Class for GUI MainFrame
 # ###########################################################################
 
 
-class ImagePanel(wx.Panel):
-
-    def __init__(self, parent, config, gui_size, **kwargs):
-        h = gui_size[0]/2
-        w = gui_size[1]/3
-        wx.Panel.__init__(self, parent, -1,
-                          style=wx.SUNKEN_BORDER, size=(h, w))
-
-        self.figure = matplotlib.figure.Figure()
-        self.axes = self.figure.add_subplot(1, 1, 1)
-        self.canvas = FigureCanvas(self, -1, self.figure)
-        self.orig_xlim = None
-        self.orig_ylim = None
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
-        self.SetSizer(self.sizer)
-        self.Fit()
-
-    def getfigure(self):
-        return(self.figure)
-
-    def drawplot(self, img, img_name, itr, index, bodyparts, cmap, keep_view=False):
-        xlim = self.axes.get_xlim()
-        ylim = self.axes.get_ylim()
-        self.axes.clear()
-
-        # convert the image to RGB as you are showing the image with matplotlib
-        im = cv2.imread(img)[..., ::-1]
-        ax = self.axes.imshow(im, cmap=cmap)
-        self.orig_xlim = self.axes.get_xlim()
-        self.orig_ylim = self.axes.get_ylim()
-        divider = make_axes_locatable(self.axes)
-        colorIndex = np.linspace(np.min(im), np.max(im), len(bodyparts))
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        cbar = self.figure.colorbar(
-            ax, cax=cax, spacing='proportional', ticks=colorIndex)
-        cbar.set_ticklabels(bodyparts[::-1])
-        if keep_view:
-            self.axes.set_xlim(xlim)
-            self.axes.set_ylim(ylim)
-        self.toolbar = NavigationToolbar(self.canvas)
-        return(self.figure, self.axes, self.canvas, self.toolbar)
-
-    def resetView(self):
-        self.axes.set_xlim(self.orig_xlim)
-        self.axes.set_ylim(self.orig_ylim)
-
-    def getColorIndices(self, img, bodyparts):
-        """
-        Returns the colormaps ticks and . The order of ticks labels is reversed.
-        """
-        im = cv2.imread(img)
-        norm = mcolors.Normalize(vmin=0, vmax=np.max(im))
-        ticks = np.linspace(0, np.max(im), len(bodyparts))[::-1]
-        return norm, ticks, im.shape
 
 
 class WidgetPanel(wx.Panel):
@@ -166,7 +109,12 @@ class MainFrame(wx.Frame):
         topSplitter = wx.SplitterWindow(self)
         vSplitter = wx.SplitterWindow(topSplitter)
 
-        self.image_panel = ImagePanel(vSplitter, config, self.gui_size)
+        # Dummy Part Started
+        image_source = ".\\deeplabcut\\gui\\media\\dlc_1-01.png"
+        img = mpimg.imread(image_source)
+        self.img_size = img.shape
+        # Dummy Part Finished
+        self.image_panel = Plot(vSplitter, img=img)
         self.choice_panel = ScrollPanel(vSplitter)
         vSplitter.SplitVertically(
             self.image_panel, self.choice_panel, sashPosition=self.gui_size[0]*0.8)
@@ -200,7 +148,8 @@ class MainFrame(wx.Frame):
 
 ###############################################################################################################################
 # Variables initialization
-
+        self.axes = self.image_panel.get_axes()
+        self.figure = self.image_panel.figure
         self.currentDirectory = os.getcwd()
         self.index = []
         self.iter = []
@@ -210,15 +159,10 @@ class MainFrame(wx.Frame):
         self.config_file = config
         self.filelist = filelist
         self.new_labels = False
-        self.buttonCounter = []
-        self.bodyparts2plot = []
         self.drs = []
-        self.num = []
         self.view_locked = False
         # Workaround for MAC - xlim and ylim changed events seem to be triggered too often so need to make sure that the
         # xlim and ylim have actually changed before turning zoom off
-        self.prezoom_xlim = []
-        self.prezoom_ylim = []
 
 
 # Preview Image
@@ -265,45 +209,6 @@ class MainFrame(wx.Frame):
         self.colormap = self.colormap.reversed()
         self.project_path = self.cfg['project_path']
 
-        self.labeled_data_path = os.listdir(os.path.join(self.cfg['project_path'], 'labeled-data'))[0]
-        self.dir = os.path.join(self.project_path, 'labeled-data', self.labeled_data_path)
-        self.index = np.sort([fn for fn in glob.glob(
-            os.path.join(self.dir, '*.png')) if ('labeled.png' not in fn)])
-        self.statusbar.SetStatusText(
-            'Working on folder: {}'.format(os.path.split(str(self.dir))[-1]))
-        # [n.split(self.project_path+'/')[1] for n in self.index]
-        self.relativeimagenames = ['labeled' +
-                                   n.split('labeled')[1] for n in self.index]
-
-# Reading the existing dataset,if already present
-        self.dataFrame = pd.read_hdf(os.path.join(
-            self.dir, 'CollectedData_'+self.scorer+'.h5'), 'df_with_missing')
-        self.dataFrame.sort_index(inplace=True)
-
-# Finds the first empty row in the dataframe and sets the iteration to that index
-        for idx, j in enumerate(self.dataFrame.index):
-            values = self.dataFrame.loc[j, :].values
-            if np.prod(np.isnan(values)) == 1:
-                self.iter = idx
-                break
-            else:
-                self.iter = 0
-
-
-# Reading the image name
-        self.img = self.index[self.iter]
-        img_name = Path(self.index[self.iter]).name
-        self.norm, self.colorIndex, self.img_size = self.image_panel.getColorIndices(
-            self.img, self.bodyparts)        # In order to show the borders to the user for analysis
-
-# checks for unique bodyparts
-        if len(self.bodyparts) != len(set(self.bodyparts)):
-            print("Error - bodyparts must have unique labels! Please choose unique bodyparts in config.yaml file and try again. Quitting for now!")
-            self.Close(True)
-
-        self.figure, self.axes, self.canvas, self.toolbar = self.image_panel.drawplot(
-            self.img, img_name, self.iter, self.index, self.bodyparts, self.colormap)
-
 # the first checkbox is for quartile and the second checkbox is the central analysis
 # This the part in order to activate different paradigms (OFT, MWM)
         self.choiceBox, self.checkBoxes, self.Scaler, self.Recenter = self.choice_panel.addCheckButtons(self.paradigm)
@@ -315,7 +220,6 @@ class MainFrame(wx.Frame):
         self.Recenter.Bind(wx.EVT_BUTTON, self.resetcenter)
         self.createPatch()
 
-        self.buttonCounter = MainFrame.plot(self, self.img)
 
     # Analysis Patches
     def createPatch(self):
@@ -423,31 +327,6 @@ class MainFrame(wx.Frame):
                              self.dataFrame[self.scorer][bp]['y'].values[self.iter], bp, bpindex]]
             self.previous_image_points.append(image_points)
         return(self.previous_image_points)
-
-    def plot(self, img):
-        """
-        Plots and call auxfun_drag class for moving and removing points.
-        """
-        self.drs = []
-        self.updatedCoords = []
-        for bpindex, bp in enumerate(self.bodyparts):
-            color = self.colormap(self.norm(self.colorIndex[bpindex]))
-            self.points = [self.dataFrame[self.scorer][bp]['x'].values[self.iter],
-                           self.dataFrame[self.scorer][bp]['y'].values[self.iter]]
-            circle = [patches.Circle(
-                (self.points[0], self.points[1]), radius=self.markerSize, fc=color, alpha=self.alpha)]
-            self.axes.add_patch(circle[0])
-            self.dr = auxfun_drag_label.DraggablePoint(
-                circle[0], self.bodyparts[bpindex])
-            self.dr.connect()
-            self.dr.coords = MainFrame.getLabels(self, self.iter)[bpindex]
-            self.drs.append(self.dr)
-            self.updatedCoords.append(self.dr.coords)
-            if np.isnan(self.points)[0] == False:
-                self.buttonCounter.append(bpindex)
-        self.figure.canvas.draw()
-
-        return(self.buttonCounter)
 
 
 def show(config, paradigm, files=[], parent=None):
