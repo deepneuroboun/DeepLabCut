@@ -109,9 +109,9 @@ class MainFrame(wx.Frame):
         topSplitter = wx.SplitterWindow(self)
         vSplitter = wx.SplitterWindow(topSplitter)
 
-        # Dummy Part Started
-        image_source = ".\\deeplabcut\\gui\\media\\dlc_1-01.png"
-        img = mpimg.imread(image_source)
+        # Load Images
+        self.analysis_files, self.img_files = self._get_images_h5(filelist)
+        img = mpimg.imread(self.img_files[0])
         self.img_size = img.shape
         # Dummy Part Finished
         self.image_panel = Plot(vSplitter, img=img)
@@ -135,9 +135,11 @@ class MainFrame(wx.Frame):
         widgetsizer.AddStretchSpacer(15)
         self.ok = wx.Button(self.widget_panel, id=wx.ID_ANY, label="OK")
         self.quit = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Quit")
+        self.crop = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Crop")
 
-        widgetsizer.Add(self.ok, 1, wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, 15)
-        widgetsizer.Add(self.quit, 1, wx.ALL | wx.EXPAND, 15)
+        widgetsizer.Add(self.crop, 1, wx.ALL, 15)
+        widgetsizer.Add(self.ok, 1, wx.ALL , 15)
+        widgetsizer.Add(self.quit, 1, wx.ALL, 15)
 
         self.quit.Bind(wx.EVT_BUTTON, self.quitButton)
         self.ok.Bind(wx.EVT_BUTTON, self.okButton)
@@ -161,13 +163,35 @@ class MainFrame(wx.Frame):
         self.new_labels = False
         self.drs = []
         self.view_locked = False
-        # Workaround for MAC - xlim and ylim changed events seem to be triggered too often so need to make sure that the
-        # xlim and ylim have actually changed before turning zoom off
 
 
 # Preview Image
         self.paradigm = paradigm
         self.previewImage()
+    
+    def _get_images_h5(self, file_list):
+        analysis_files = []
+        img_files = []
+        for cur_file in file_list:
+            splitter = os.path.splitext(cur_file)
+            name = splitter[0]
+            cur_ext = splitter[1]
+            if cur_ext == 'csv' or cur_ext == 'h5':
+                analysis_files.append(cur_file)
+            else:
+               vidcap = cv2.VideoCapture(cur_file)
+               _, img = vidcap.read()
+               img_file_name = "%s.%s" % (name, "jpg")
+               cv2.imwrite(img_file_name, img)
+               img_files.append(img_file_name)
+               vidcap.release()
+        
+        return analysis_files, img_files
+
+               
+        
+        
+
 
 ###############################################################################################################################
 # BUTTONS FUNCTIONS FOR HOTKEYS
@@ -195,7 +219,7 @@ class MainFrame(wx.Frame):
         Show the DirDialog and ask the user to change the directory where machine labels are stored
         """
         self.statusbar.SetStatusText(
-            "Looking for a folder to start labeling...")
+            "First, push the crop button and select the interested area with mouse...")
         cwd = os.path.join(os.getcwd())
 
 # Reading config file and its variables
@@ -316,17 +340,6 @@ class MainFrame(wx.Frame):
         self.createCenter()
         self.axes.add_patch(self.central_rect)
         self.figure.canvas.draw()
-
-    def getLabels(self, img_index):
-        """
-        Returns a list of x and y labels of the corresponding image index
-        """
-        self.previous_image_points = []
-        for bpindex, bp in enumerate(self.bodyparts):
-            image_points = [[self.dataFrame[self.scorer][bp]['x'].values[self.iter],
-                             self.dataFrame[self.scorer][bp]['y'].values[self.iter], bp, bpindex]]
-            self.previous_image_points.append(image_points)
-        return(self.previous_image_points)
 
 
 def show(config, paradigm, files=[], parent=None):
