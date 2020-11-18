@@ -18,8 +18,13 @@ class Plot(wx.Panel):
                                     drawtype='box', useblit=True,
                                     button=[1, 3], minspanx=5, minspany=5,
                                     spancoords='pixels', interactive=True)
+        self._rect_selector.set_active(False)
         self._img = img
-        self._axes.imshow(img)
+        self._cur_shown = self._axes.imshow(img)
+        self._x1 = None
+        self._x2 = None
+        self._y1 = None
+        self._y2 = None
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.canvas, 1, wx.EXPAND)
@@ -29,12 +34,25 @@ class Plot(wx.Panel):
         """
         docstring
         """
-        x1, y1 = int(eclick.xdata), int(eclick.ydata)
-        x2, y2 = int(erelease.xdata), int(erelease.ydata)
-        cur_img = self._img[y1:y2, x1:x2, :]
-        OtherFrame(title='Other Frame', parent=wx.GetTopLevelParent(self), img=cur_img)
-        print("(%3.2f, %3.2f) --> (%3.2f, %3.2f)" % (x1, y1, x2, y2))
-        print(" The button you used were: %s %s" % (eclick.button, erelease.button))
+        self._x1, self._y1 = int(eclick.xdata), int(eclick.ydata)
+        self._x2, self._y2 = int(erelease.xdata), int(erelease.ydata)
+    
+
+    def set_active_rs(self, state):
+        """
+        docstring
+        """
+        self._rect_selector.set_active(state)
+    
+
+    def show_cropped_image(self):
+        cur_img = self._img[self._y1:self._y2, self._x1:self._x2, :]
+        self._cur_shown.remove()
+        self._cur_shown = self._axes.imshow(cur_img)
+        self._axes.relim()
+        self.figure.canvas.draw_idle()
+        self._img = cur_img
+
         
 
     def get_axes(self):
@@ -57,18 +75,6 @@ class PlotNotebook(wx.Panel):
         page = Plot(self.nb, img=img)
         self.nb.AddPage(page, name)
         return page.figure
-
-class OtherFrame(wx.Frame):
-    """
-    docstring
-    """
-    def __init__(self, title, parent=None, img=None):
-        """
-        docstring
-        """
-        wx.Frame.__init__(self, parent=parent, title=title)
-        Plot(self, img=img)
-        self.Show()
 
 
 def demo():

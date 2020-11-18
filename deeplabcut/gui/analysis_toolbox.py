@@ -111,10 +111,10 @@ class MainFrame(wx.Frame):
 
         # Load Images
         self.analysis_files, self.img_files = self._get_images_h5(filelist)
-        img = mpimg.imread(self.img_files[0])
-        self.img_size = img.shape
+        self.img = mpimg.imread(self.img_files[0])
+        self.img_size = self.img.shape
         # Dummy Part Finished
-        self.image_panel = Plot(vSplitter, img=img)
+        self.image_panel = Plot(vSplitter, img=self.img)
         self.choice_panel = ScrollPanel(vSplitter)
         vSplitter.SplitVertically(
             self.image_panel, self.choice_panel, sashPosition=self.gui_size[0]*0.8)
@@ -150,6 +150,7 @@ class MainFrame(wx.Frame):
         # Function Binding
         self.quit.Bind(wx.EVT_BUTTON, self.quitButton)
         self.ok.Bind(wx.EVT_BUTTON, self.okButton)
+        self.crop.Bind(wx.EVT_BUTTON, self.crop_button)
 
         self.widget_panel.SetSizer(widgetsizer)
         self.widget_panel.SetSizerAndFit(widgetsizer)
@@ -170,6 +171,7 @@ class MainFrame(wx.Frame):
         self.new_labels = False
         self.drs = []
         self.view_locked = False
+        self.crop_btn_change = 0
 
 
 # Preview Image
@@ -220,6 +222,19 @@ class MainFrame(wx.Frame):
         self.statusbar.SetStatusText("Qutting now!")
 
         self.Destroy()
+        
+
+    def crop_button(self, event):
+        """
+        docstring
+        """
+        labels = ["Crop", "Done"]
+        self.crop_btn_change = 1 - self.crop_btn_change
+        btn = event.GetEventObject()
+        btn.SetLabel(labels[self.crop_btn_change])
+        self.image_panel.set_active_rs(bool(self.crop_btn_change))
+        if not bool(self.crop_btn_change):
+            self.image_panel.show_cropped_image()
 
     def previewImage(self):
         """
