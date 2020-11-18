@@ -132,15 +132,22 @@ class MainFrame(wx.Frame):
 
         widgetsizer = wx.WrapSizer(orient=wx.HORIZONTAL, flags=wx.EXPAND)
 
-        widgetsizer.AddStretchSpacer(15)
+        # Buttons
         self.ok = wx.Button(self.widget_panel, id=wx.ID_ANY, label="OK")
         self.quit = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Quit")
         self.crop = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Crop")
 
-        widgetsizer.Add(self.crop, 1, wx.ALL, 15)
-        widgetsizer.Add(self.ok, 1, wx.ALL , 15)
-        widgetsizer.Add(self.quit, 1, wx.ALL, 15)
+        # Flags
+        flags_all = wx.SizerFlags(1)
+        flags_all.Border(wx.ALL, 10)
 
+        # Alignment and Locations
+        widgetsizer.Add(self.ok, flags_all)
+        widgetsizer.Add(self.crop, flags_all)
+        widgetsizer.AddStretchSpacer(10)
+        widgetsizer.Add(self.quit, flags_all)
+
+        # Function Binding
         self.quit.Bind(wx.EVT_BUTTON, self.quitButton)
         self.ok.Bind(wx.EVT_BUTTON, self.okButton)
 

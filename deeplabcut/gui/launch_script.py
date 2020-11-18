@@ -37,8 +37,6 @@ class MainFrame(wx.Frame):
         page1 = Welcome(self.nb, self.gui_size)
         self.nb.AddPage(page1, "Welcome")
 
-        # page2 = CreateNewProject(self.nb,self.gui_size)
-        # self.nb.AddPage(page2, "Manage Project")
 
         self.sizer = wx.BoxSizer()
         self.sizer.Add(self.nb, 1, wx.EXPAND)
