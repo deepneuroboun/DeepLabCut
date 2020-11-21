@@ -36,6 +36,7 @@ class Plot(wx.Panel):
         """
         self._x1, self._y1 = int(eclick.xdata), int(eclick.ydata)
         self._x2, self._y2 = int(erelease.xdata), int(erelease.ydata)
+        
     
 
     def set_active_rs(self, state):
@@ -47,6 +48,20 @@ class Plot(wx.Panel):
 
     def show_cropped_image(self):
         cur_img = self._img[self._y1:self._y2, self._x1:self._x2, :]
+
+        # set analysis toolbox crop and img size parameters
+        analysis_toolbox = self.TopLevelParent
+        # Crop Parameters
+        x1, x2, y1, y2 = analysis_toolbox.cur_crop
+        x1, y1 = x1 + self._x1, y1 + self._y1
+        x2, y2 = x2 - self._x2, y2 + self._y2
+        analysis_toolbox.cur_crop = (x1, x2, y1, y2)
+        # Image Size
+        analysis_toolbox.img_size = cur_img.shape
+        # needs generating patches for the new image
+        analysis_toolbox.createCenter()
+        analysis_toolbox.createQuartile()
+
         self._cur_shown.remove()
         self._cur_shown = self._axes.imshow(cur_img)
         self._axes.relim()

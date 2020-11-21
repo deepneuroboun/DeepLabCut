@@ -11,7 +11,6 @@ Licensed under GNU Lesser General Public License v3.0
 
 import wx
 from deeplabcut.gui.welcome import Welcome
-from deeplabcut.gui.create_new_project import CreateNewProject
 
 
 class MainFrame(wx.Frame):
@@ -27,7 +26,6 @@ class MainFrame(wx.Frame):
         self.gui_size = (screenWidth*0.7, screenHeight*0.55)
         wx.Frame.__init__(self, None, wx.ID_ANY, "DeepLabCut", size=wx.Size(
             self.gui_size), pos=wx.DefaultPosition, style=wx.RESIZE_BORDER | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
-#        wx.Frame.__init__( self, None, id = wx.ID_ANY, title = 'DeepLabCut',size = wx.Size(self.gui_size), pos = wx.DefaultPosition, style = wx.RESIZE_BORDER|wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
         # This sets the minimum size of the GUI. It can scale now!
         self.SetSizeHints(wx.Size(self.gui_size))
         # Here we create a panel and a notebook on the panel

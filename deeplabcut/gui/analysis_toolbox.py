@@ -113,6 +113,7 @@ class MainFrame(wx.Frame):
         self.analysis_files, self.img_files = self._get_images_h5(filelist)
         self.img = mpimg.imread(self.img_files[0])
         self.img_size = self.img.shape
+        self.cur_crop = (0, self.img_size[0], 0, self.img_size[1])
         # Dummy Part Finished
         self.image_panel = Plot(vSplitter, img=self.img)
         self.choice_panel = ScrollPanel(vSplitter)
