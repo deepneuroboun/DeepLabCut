@@ -207,7 +207,7 @@ class MainFrame(wx.Frame):
 # BUTTONS FUNCTIONS FOR HOTKEYS
     def okButton(self, event):
         res = plot_trajectories(
-            self.config_file, self.filelist, self.cfg['options'], videotype='.MP4')
+            self.config_file, self.filelist, self.cfg['options'], videotype='.MP4', crop=self.cur_crop)
         # plot_thread = Thread(target=plotting.plot_trajectories,
         #         args=(self.config_file, self.filelist, self.options),
         #         kwargs={'videotype': '.MP4'})
@@ -240,8 +240,8 @@ class MainFrame(wx.Frame):
             # Crop Parameters
             x1, x2, y1, y2 = self.cur_crop
             cx1, cx2, cy1, cy2 = coords
+            x2, y2 = x1 + cx2, y1 + cy2
             x1, y1 = x1 + cx1, y1 + cy1
-            x2, y2 = x2 - cx2, y2 + cy2
             self.cur_crop = (x1, x2, y1, y2)
             # needs generating patches for the new image
             self.createCenter()
@@ -298,8 +298,8 @@ class MainFrame(wx.Frame):
 
         central_x, central_y = tuple(eval(self.cfg['central_rect']['start']))
         # Assumption : The maze center is at the center of the image
-        central_rect_start = (central_x - central_rect_x_len / 2,
-                              central_y - central_rect_y_len / 2)
+        central_rect_start = (central_y - central_rect_y_len / 2,
+                              central_x - central_rect_x_len / 2)
 
         self.central_rect = patches.Rectangle(central_rect_start,
                                               central_rect_y_len,

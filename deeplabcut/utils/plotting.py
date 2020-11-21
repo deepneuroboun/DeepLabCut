@@ -200,7 +200,7 @@ def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures,
 ##################################################
 
 def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trainingsetindex=0, filtered=False,
-                      displayedbodyparts='all', showfigures=False, destfolder=None):
+                      displayedbodyparts='all', showfigures=False, destfolder=None, crop=None):
     """
     Plots the trajectories of various bodyparts across the video.
 
@@ -261,7 +261,7 @@ def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trai
 
         if notanalyzed:
             print("The video was not analyzed with this scorer:", DLCscorer)
-            analyze_videos(config, [video], videotype='.MP4')
+            analyze_videos(config, [video], videotype='.MP4', crop=crop)
         #LoadData
         print("Loading ", video, "and data.")
         datafound,metadata,Dataframe,DLCscorer,suffix=auxiliaryfunctions.LoadAnalyzedData(str(videofolder),vname,DLCscorer,filtered) #returns boolean variable if data was found and metadata + pandas array

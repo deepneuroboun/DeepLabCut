@@ -21,10 +21,11 @@ class Plot(wx.Panel):
         self._rect_selector.set_active(False)
         self._img = img
         self._cur_shown = self._axes.imshow(img)
-        self._x1 = None
-        self._x2 = None
-        self._y1 = None
-        self._y2 = None
+        (y, x, _) = img.shape
+        self._x1 = 0
+        self._x2 = x
+        self._y1 = 0
+        self._y2 = y
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.canvas, 1, wx.EXPAND)
