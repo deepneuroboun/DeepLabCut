@@ -235,7 +235,17 @@ class MainFrame(wx.Frame):
         btn.SetLabel(labels[self.crop_btn_change])
         self.image_panel.set_active_rs(bool(self.crop_btn_change))
         if not bool(self.crop_btn_change):
-            self.image_panel.show_cropped_image()
+            # x1, x2, y1, y2
+            coords, self.img_size = self.image_panel.show_cropped_image()
+            # Crop Parameters
+            x1, x2, y1, y2 = self.cur_crop
+            cx1, cx2, cy1, cy2 = coords
+            x1, y1 = x1 + cx1, y1 + cy1
+            x2, y2 = x2 - cx2, y2 + cy2
+            self.cur_crop = (x1, x2, y1, y2)
+            # needs generating patches for the new image
+            self.createCenter()
+            self.createQuartile()
 
     def previewImage(self):
         """
