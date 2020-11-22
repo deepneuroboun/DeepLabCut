@@ -75,7 +75,8 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
 
 
     bases_quartile = pd.DataFrame(np.zeros((len(Dataframe),len(bodyparts2plot))),columns = bodyparts2plot)
-    bases_center = bases_quartile
+    bases_center = pd.DataFrame(np.zeros((len(Dataframe),len(bodyparts2plot))),columns = bodyparts2plot)
+
     for bp in (bodyparts2plot):
         filtered_index = Dataframe[scorer][bp]['likelihood'].values > pcutoff
         filtered_dataframe = Dataframe[scorer][bp][filtered_index]
@@ -87,31 +88,48 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
             for elem in zip(xValues, yValues):
                 index = -1
                 for region in options[analysis].keys():
-                    if (in_region(options[analysis][region], elem)):
+                    if in_region(options[analysis][region], elem):
                         if analysis == 'vector-based':
                             bases_quartile.loc[cur_row,bp] = region
                         else:
                             bases_center.loc[cur_row,bp] = region
                         index = region
                 # TODO: needs some adjustments for inside-outside of regions
-                if index == -1:
+                if analysis =="center-based" and index == -1:
                     bases_center.loc[cur_row,bp] = 'peripheral'
                 cur_row += 1
     
     to_plot = [[],[]]
     all_ROI = [bases_quartile,bases_center]
     plt_names = ["quartile","central"]
+    cur = 0
     for each in all_ROI:
         for row in range(len(each)):
             to_add = each.iloc[row].mode()[0]
-            to_plot[all_ROI.index(each)].append(to_add)
-        each["plot count"] = to_plot[all_ROI.index(each)]
-        p = (ggplot(each, aes(x='plot count', y='stat(count/FPS)'))  + geom_histogram(binwidth=.5) +
+            to_plot[cur].append(to_add)
+        each["counted region"] = to_plot[cur]
+        each["frame"] = each.index + 1
+        each["time (seconds)"] = (each.index + 1)/FPS
+        summary_df = pd.value_counts(to_plot[cur]).to_frame().reset_index()
+        summary_df.columns = ["region","count"]
+
+        each.to_csv(os.path.join(tmpfolder,"regions-"+plt_names[cur]+".csv"), index = False)
+        summary_df.to_csv(os.path.join(tmpfolder,"regions-summary-" + plt_names[cur]+ ".csv"), index = False)
+        
+        p = (ggplot(each, aes(x='counted region', y='stat(count/FPS)'))  + geom_histogram(binwidth=.5) +
             labels.labs(title = "Time Spent in Each Region",
             x="Region",
             y="Seconds")
             )
-        p.save(os.path.join(tmpfolder,"regions-"+plt_names[all_ROI.index(each)]+suffix), dpi=1000)
+        p.save(os.path.join(tmpfolder,"regions-"+plt_names[cur]+suffix))
+
+        p2 = (ggplot(each,aes(x = "time (seconds)", y ="counted region", color = "counted region")) + geom_point() + 
+            labels.labs(title = "Region Occupancy by Time",
+            x = "Seconds",
+            y = "Region")
+            )
+        p2.save(os.path.join(tmpfolder,"regions-by-time"+plt_names[cur]+suffix))
+        cur+=1
 
 
 
