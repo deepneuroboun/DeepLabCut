@@ -16,7 +16,7 @@ class Plot(wx.Panel):
         self._axes = self.figure.gca()
         self._rect_selector = RectangleSelector(self._axes, self._line_select_callback,
                                     drawtype='box', useblit=True,
-                                    button=[1, 3], minspanx=5, minspany=5,
+                                    button=[1], minspanx=5, minspany=5,
                                     spancoords='pixels', interactive=True)
         self._rect_selector.set_active(False)
         self._img = img
@@ -39,12 +39,18 @@ class Plot(wx.Panel):
         self._x2, self._y2 = int(erelease.xdata), int(erelease.ydata)
         
     
+    def add_rs(self):
+        return RectangleSelector(self._axes, self._line_select_callback,
+                                 drawtype='box', useblit=True,
+                                 button=[1], minspanx=5, minspany=5,
+                                 spancoords='pixels', interactive=True)
 
     def set_active_rs(self, state):
         """
         docstring
         """
         self._rect_selector.set_active(state)
+
     
 
     def show_cropped_image(self):

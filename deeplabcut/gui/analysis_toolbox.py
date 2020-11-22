@@ -46,17 +46,17 @@ class ScrollPanel(SP.ScrolledPanel):
         self.SetupScrolling(scroll_x=True, scroll_y=True, scrollToTop=False)
         self.Layout()
 
-    def on_focus(self, event):
-        pass
 
-    def addCheckButtons(self, paradigm):
+    def addCheckButtons(self, paradigm, image_panel):
         """
         Adds radio buttons for each bodypart on the right panel
         """
+        # This should be changed after demo
         if paradigm == 'OFT':
             center_label = 'Center'
         if paradigm == 'MWM':
             center_label = 'Target'
+        # END CHANGE
         self.choiceBox = wx.BoxSizer(wx.VERTICAL)
 
         self.quartile = wx.CheckBox(self, id=wx.ID_ANY, label='Quartile')
@@ -71,6 +71,15 @@ class ScrollPanel(SP.ScrolledPanel):
         self.choiceBox.Add(scaler_text, 0, wx.ALL, 5)
         self.choiceBox.Add(self.scaler, 0, wx.ALL, 5)
         self.choiceBox.Add(self.re_center, 0, wx.ALL, 5)
+        # Should be changed after demo
+        if paradigm == 'MWM':
+            self.target_rs = image_panel.add_rs()
+            self.target_rs_on = 0
+            self.target_crop_btn = wx.Button(self, id=wx.ID_ANY, label='Select Target')
+            self.target_crop_btn.Bind(wx.EVT_BUTTON, self.target_crop)
+            self.choiceBox.Add(self.target_crop_btn, 0, wx.ALL, 5)
+        # END CHANGE
+
 
         self.SetSizerAndFit(self.choiceBox)
         self.Layout()
@@ -78,6 +87,17 @@ class ScrollPanel(SP.ScrolledPanel):
 
     def clearBoxer(self):
         self.choiceBox.Clear(True)
+    
+
+    def target_crop(self, evt):
+        labels = ['Select Target', 'Finish Target']
+        btn = evt.GetEventObject()
+        self.target_rs_on = 1 - self.target_rs_on
+        btn.SetLabel(labels[self.target_rs_on])
+        self.target_rs.set_active(bool(self.target_rs_on))
+        if not bool(self.target_rs_on):
+            main_frame = wx.GetTopLevelParent(self)
+            
 
 
 class MainFrame(wx.Frame):
@@ -268,7 +288,7 @@ class MainFrame(wx.Frame):
 
 # the first checkbox is for quartile and the second checkbox is the central analysis
 # This the part in order to activate different paradigms (OFT, MWM)
-        self.choiceBox, self.checkBoxes, self.Scaler, self.Recenter = self.choice_panel.addCheckButtons(self.paradigm)
+        self.choiceBox, self.checkBoxes, self.Scaler, self.Recenter = self.choice_panel.addCheckButtons(self.paradigm, self.image_panel)
         self.Scaler.Enable(False)
         self.Recenter.Enable(False)
         self.Bind(wx.EVT_CHECKBOX, self.isQuartile, self.checkBoxes[0])
