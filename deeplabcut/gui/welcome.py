@@ -41,7 +41,7 @@ class Welcome(wx.Panel):
 
         # Experimental Paradigms
         lines = [["OFT", "EPM"], ["WYM", "MWM", "FST"]]
-        is_active = [[True, False],[False, True, False]]
+        is_active = [[True, True],[False, True, False]]
         line_sizers = [None] * len(lines)
 
         for i, line in enumerate(lines):
