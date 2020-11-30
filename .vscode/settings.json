@@ -1,7 +1,0 @@
-{
-    "python.pythonPath": "/home/ornitorenkperry/anaconda3/envs/dlc_boun/bin/python",
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": false,
-    "python.linting.pylintArgs": ["--generated-members=wx,cv2"],
-    "git.enableCommitSigning": true
-}
