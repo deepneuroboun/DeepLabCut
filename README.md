@@ -15,3 +15,4 @@ It includes a custom graphical user interface that makes it easy to perform some
 ### Note:
 - This is work in progress and is being designed for a specific use. There are more features to come (speed analysis, more complex region selection, automatic video rotation, other behavioral paradigms)
 - This version lacks the standard GUI of DeepLabCut and is not up to date with the original repository. If you want to use this version, we recommend setting it up separately.
+- We did not include the models and the corresponding config files for the paradigms in this repository because they are too large. Please contact use if you need these files.
