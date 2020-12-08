@@ -52,7 +52,7 @@ class ScrollPanel(SP.ScrolledPanel):
         Adds radio buttons for each bodypart on the right panel
         """
         # This should be changed after demo
-        if paradigm == 'OFT':
+        if paradigm in ['OFT','EPM']: #TODO: temporary solution to make the code run. need something else for EPM
             center_label = 'Center'
         if paradigm == 'MWM':
             center_label = 'Target'
