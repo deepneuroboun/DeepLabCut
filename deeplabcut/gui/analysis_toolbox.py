@@ -1,10 +1,8 @@
 """
-DeepLabCut2.0 Toolbox (deeplabcut.org)
-© A. & M. Mathis Labs
-https://github.com/AlexEMG/DeepLabCut
+DeepNeuroBoun Toolbox
+© Behavioral Neuroscience Lab, Bogazici University
+https://github.com/deepneuroboun/DeepLabCut
 
-Please see AUTHORS for contributors.
-https://github.com/AlexEMG/DeepLabCut/blob/master/AUTHORS
 Licensed under GNU Lesser General Public License v3.0
 """
 
@@ -17,15 +15,12 @@ import wx
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.collections import PatchCollection
-import matplotlib.colors as mcolors
 import matplotlib.image as mpimg
 import matplotlib
 from deeplabcut.utils.auxiliaryfunctions import read_config
 from deeplabcut.utils.plotting import plot_trajectories
-from deeplabcut.gui.matplotlib_cropper import Plot
-from deeplabcut.gui.paradigm_panel.panel import paradigm_selector
+from .matplotlib_cropper import Plot
+from .paradigm_panel.panel import paradigm_selector
 
 # ###########################################################################
 # Class for GUI MainFrame
@@ -56,7 +51,7 @@ class MainFrame(wx.Frame):
                           size=wx.Size(self.gui_size), pos=wx.DefaultPosition, style=wx.RESIZE_BORDER | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
         self.statusbar = self.CreateStatusBar()
         self.statusbar.SetStatusText(
-            "Looking for a folder to start analyzing. Click 'Load frame' to begin.")
+            "First, push the crop button and select the interested area with mouse...")
 
         # This sets the minimum size of the GUI. It can scale now!
         self.SetSizeHints(wx.Size(self.gui_size))
@@ -117,8 +112,6 @@ class MainFrame(wx.Frame):
 
 ###############################################################################################################################
 # Variables initialization
-        self.axes = self.image_panel.get_axes()
-        self.figure = self.image_panel.figure
         self.currentDirectory = os.getcwd()
         self.index = []
         self.iter = []
@@ -131,11 +124,10 @@ class MainFrame(wx.Frame):
         self.drs = []
         self.view_locked = False
         self.crop_btn_change = 0
-
-
-# Preview Image
         self.paradigm = paradigm
-        self.previewImage()
+        self.cfg = read_config(self.config_file, is_paradigm=True)
+        self.choice_panel.addCheckButtons(
+            self.paradigm, self.image_panel, self.img_size, self.cfg)
     
     def _get_images_h5(self, file_list):
         analysis_files = []
@@ -202,135 +194,9 @@ class MainFrame(wx.Frame):
             x1, y1 = x1 + cx1, y1 + cy1
             self.cur_crop = (x1, x2, y1, y2)
             # needs generating patches for the new image
-            self.createCenter()
-            self.createQuartile()
-
-    def previewImage(self):
-        """
-        Show the DirDialog and ask the user to change the directory where machine labels are stored
-        """
-        self.statusbar.SetStatusText(
-            "First, push the crop button and select the interested area with mouse...")
-        cwd = os.path.join(os.getcwd())
-
-# Reading config file and its variables
-        self.cfg = read_config(self.config_file, is_paradigm=True)
-        self.scorer = self.cfg['scorer']
-        self.bodyparts = self.cfg['bodyparts']
-        self.videos = self.cfg['video_sets'].keys()
-        self.markerSize = self.cfg['dotsize']
-        self.alpha = self.cfg['alphavalue']
-        self.colormap = plt.get_cmap(self.cfg['colormap'])
-        self.colormap = self.colormap.reversed()
-        self.project_path = self.cfg['project_path']
-
-# the first checkbox is for quartile and the second checkbox is the central analysis
-# This the part in order to activate different paradigms (OFT, MWM)
-        self.choiceBox, self.checkBoxes, self.Scaler, self.Recenter = self.choice_panel.addCheckButtons(self.paradigm, self.image_panel)
-        self.Scaler.Enable(False)
-        self.Recenter.Enable(False)
-        self.Bind(wx.EVT_CHECKBOX, self.isQuartile, self.checkBoxes[0])
-        self.Bind(wx.EVT_CHECKBOX, self.isCentral, self.checkBoxes[1])
-        self.Scaler.Bind(wx.EVT_SPINCTRL, self.updateCenter)
-        self.Recenter.Bind(wx.EVT_BUTTON, self.resetcenter)
-        self.createPatch()
+            self.choice_panel.generate_patches(self.img_size)
 
 
-    # Analysis Patches
-    def createPatch(self):
-        x, y, d = self.img_size
-        # Since values are too generic it should be transformed into real values
-        for analysis_type in self.cfg['options'].keys():
-            for initial in self.cfg['options'][analysis_type].keys():
-                self.cfg['options'][analysis_type][initial] = list(map(eval, self.cfg['options'][analysis_type][initial]))
-        self.createQuartile()
-        self.createCenter()
-
-    def createCenter(self):
-
-        x, y, d = self.img_size
-        central_rect_y_len = eval(
-            self.cfg['central_rect']['y_len']) * self.Scaler.GetValue()
-        central_rect_x_len = eval(
-            self.cfg['central_rect']['x_len']) * self.Scaler.GetValue()
-
-        central_x, central_y = tuple(eval(self.cfg['central_rect']['start']))
-        # Assumption : The maze center is at the center of the image
-        central_rect_start = (central_y - central_rect_y_len / 2,
-                              central_x - central_rect_x_len / 2)
-
-        self.central_rect = patches.Rectangle(central_rect_start,
-                                              central_rect_y_len,
-                                              central_rect_x_len,
-                                              fill=False, color='w', lw=4)
-        cr = self.central_rect
-        cr_vertices = cr.get_patch_transform().transform(cr.get_path().vertices[:-1])
-        self.cfg['options']['center-based']['center'] = list(map(tuple, cr_vertices.tolist()))
-
-    def createQuartile(self):
-
-        x, y, d = self.img_size
-        starting_points = list(map(eval, self.cfg['quadrants']['start']))
-        quadrants_y_len = eval(self.cfg['quadrants']['y_len'])
-        quadrants_x_len = eval(self.cfg['quadrants']['x_len'])
-        quadrants = []
-        for starting_point in starting_points:
-            quadrants.append(patches.Rectangle(starting_point,
-                                               quadrants_y_len,
-                                               quadrants_x_len,
-                                               fill=False, color='w', lw=4))
-        self.rect = PatchCollection(quadrants, match_original=True)
-        regions = self.cfg['options']['vector-based'].keys()
-        # TODO: needs dynamic x and y positions for labels
-        x = [150, 450, 450, 150]
-        y = [150, 150, 450, 450]
-
-        for region in zip(x,y,regions):
-            x, y, label = region
-            self.axes.text(x, y, label, fontsize=30, color='white')
-        for text in self.axes.texts:
-            text.set_visible(False)
-
-    # Quartile Analysis showing to the plot
-
-    def isQuartile(self, evt):
-        curBox = evt.GetEventObject()
-        if(curBox.IsChecked()):
-            self.axes.add_collection(self.rect)
-            for text in self.axes.texts:
-                text.set_visible(True)
-        else:
-            self.rect.remove()
-            for text in self.axes.texts:
-                text.set_visible(False)
-        self.figure.canvas.draw()
-
-    # Center analysis showing to the plot
-
-    def isCentral(self, evt):
-        curBox = evt.GetEventObject()
-        if(curBox.IsChecked()):
-            self.axes.add_patch(self.central_rect)
-            self.Scaler.Enable(True)
-            self.Recenter.Enable(True)
-        else:
-            self.central_rect.remove()
-            self.Scaler.Enable(False)
-            self.Recenter.Enable(False)
-        self.figure.canvas.draw()
-
-    def updateCenter(self, event):
-        self.central_rect.remove()
-        self.createCenter()
-        self.axes.add_patch(self.central_rect)
-        self.figure.canvas.draw()
-
-    def resetcenter(self, event):
-        self.Scaler.SetToDefaultValue()
-        self.central_rect.remove()
-        self.createCenter()
-        self.axes.add_patch(self.central_rect)
-        self.figure.canvas.draw()
 
 
 def show(config, paradigm, files=[], parent=None):
