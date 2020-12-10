@@ -5,7 +5,7 @@ from matplotlib.collections import PatchCollection
 import matplotlib.patches as patches
 
 
-class OFT(SP.ScrolledPanel):
+class EPM(SP.ScrolledPanel):
     def __init__(self, parent):
         SP.ScrolledPanel.__init__(self, parent, -1, style=wx.SUNKEN_BORDER)
         self.SetupScrolling(scroll_x=True, scroll_y=True, scrollToTop=False)
@@ -20,10 +20,11 @@ class OFT(SP.ScrolledPanel):
         self.figure = image_panel.figure
         self.img_size = img_size
         self.cfg = cfg
+        # This should be changed after demo
         center_label = 'Center'
         self.choiceBox = wx.BoxSizer(wx.VERTICAL)
 
-        self.quartile = wx.CheckBox(self, id=wx.ID_ANY, label='Quartile')
+        self.quartile = wx.CheckBox(self, id=wx.ID_ANY, label='Arms')
         self.center = wx.CheckBox(self, id=wx.ID_ANY, label=center_label)
         self.scaler = fs.FloatSpin(self, -1, size=(250, -1), value=1, min_val=0.3, max_val=1.5,
                                    digits=2, increment=0.05, style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS)
@@ -55,6 +56,8 @@ class OFT(SP.ScrolledPanel):
     def clearBoxer(self):
         self.choiceBox.Clear(True)
     
+
+    
     def generate_patches(self, img_size):
         self.img_size = img_size
         self.create_quartile()
@@ -64,23 +67,17 @@ class OFT(SP.ScrolledPanel):
     def create_quartile(self):
         x, y, d = self.img_size
         starting_points = list(map(eval, self.cfg['quadrants']['start']))
-        quadrants_y_len = eval(self.cfg['quadrants']['y_len'])
-        quadrants_x_len = eval(self.cfg['quadrants']['x_len'])
+        quadrants_y_len = list(map(eval, self.cfg['quadrants']['y_len']))
+        quadrants_x_len = list(map(eval, self.cfg['quadrants']['x_len']))
         quadrants = []
-        for starting_point in starting_points:
-            quadrants.append(patches.Rectangle(starting_point,
-                                               quadrants_y_len,
-                                               quadrants_x_len,
+        for i in range(len(starting_points)):
+            quadrants.append(patches.Rectangle(starting_points[i],
+                                               quadrants_y_len[i],
+                                               quadrants_x_len[i],
                                                fill=False, color='w', lw=4))
         self.rect = PatchCollection(quadrants, match_original=True)
         regions = self.cfg['options']['vector-based'].keys()
-        # TODO: needs dynamic x and y positions for labels
-
-        for region in zip(x,y,regions):
-            x, y, label = region
-            self.axes.text(x, y, label, fontsize=30, color='white')
-        for text in self.axes.texts:
-            text.set_visible(False)
+        
 
     def create_center(self):
         x, y, d = self.img_size
@@ -157,3 +154,4 @@ class OFT(SP.ScrolledPanel):
         self.create_center()
         self.axes.add_patch(self.central_rect)
         self.figure.canvas.draw()
+

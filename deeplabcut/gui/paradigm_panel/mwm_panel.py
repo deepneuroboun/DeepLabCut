@@ -5,7 +5,7 @@ from matplotlib.collections import PatchCollection
 import matplotlib.patches as patches
 
 
-class OFT(SP.ScrolledPanel):
+class MWM(SP.ScrolledPanel):
     def __init__(self, parent):
         SP.ScrolledPanel.__init__(self, parent, -1, style=wx.SUNKEN_BORDER)
         self.SetupScrolling(scroll_x=True, scroll_y=True, scrollToTop=False)
@@ -20,7 +20,8 @@ class OFT(SP.ScrolledPanel):
         self.figure = image_panel.figure
         self.img_size = img_size
         self.cfg = cfg
-        center_label = 'Center'
+        # This should be changed after demo
+        center_label = 'Target'
         self.choiceBox = wx.BoxSizer(wx.VERTICAL)
 
         self.quartile = wx.CheckBox(self, id=wx.ID_ANY, label='Quartile')
@@ -35,6 +36,11 @@ class OFT(SP.ScrolledPanel):
         self.choiceBox.Add(scaler_text, 0, wx.ALL, 5)
         self.choiceBox.Add(self.scaler, 0, wx.ALL, 5)
         self.choiceBox.Add(self.re_center, 0, wx.ALL, 5)
+        self.target_rs = image_panel.add_rs()
+        self.target_rs_on = 0
+        self.target_crop_btn = wx.Button(self, id=wx.ID_ANY, label='Select Target')
+        self.target_crop_btn.Bind(wx.EVT_BUTTON, self.target_crop)
+        self.choiceBox.Add(self.target_crop_btn, 0, wx.ALL, 5)
 
 
         self.SetSizerAndFit(self.choiceBox)
@@ -54,6 +60,16 @@ class OFT(SP.ScrolledPanel):
 
     def clearBoxer(self):
         self.choiceBox.Clear(True)
+    
+
+    def target_crop(self, evt):
+        labels = ['Select Target', 'Finish Target']
+        btn = evt.GetEventObject()
+        self.target_rs_on = 1 - self.target_rs_on
+        btn.SetLabel(labels[self.target_rs_on])
+        self.target_rs.set_active(bool(self.target_rs_on))
+        if not bool(self.target_rs_on):
+            main_frame = wx.GetTopLevelParent(self)
     
     def generate_patches(self, img_size):
         self.img_size = img_size
@@ -75,6 +91,8 @@ class OFT(SP.ScrolledPanel):
         self.rect = PatchCollection(quadrants, match_original=True)
         regions = self.cfg['options']['vector-based'].keys()
         # TODO: needs dynamic x and y positions for labels
+        x = [150, 450, 450, 150]
+        y = [150, 150, 450, 450]
 
         for region in zip(x,y,regions):
             x, y, label = region
