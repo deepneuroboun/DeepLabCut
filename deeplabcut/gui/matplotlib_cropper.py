@@ -3,8 +3,9 @@ import wx.lib.agw.aui as aui
 
 import matplotlib as mpl
 import matplotlib.image as mpimg
-from matplotlib.widgets import RectangleSelector
+from matplotlib.widgets import RectangleSelector, PolygonSelector
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
+from matplotlib.path import Path
 
 class Plot(wx.Panel):
 
@@ -26,7 +27,6 @@ class Plot(wx.Panel):
         self._x2 = x
         self._y1 = 0
         self._y2 = y
-
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.canvas, 1, wx.EXPAND)
         self.SetSizer(sizer)
@@ -71,6 +71,15 @@ class Plot(wx.Panel):
         docstring
         """
         return self._axes
+    
+    
+    def start_select(self):
+        self.poly = PolygonSelector(self._axes, self.onselect, \
+            lineprops= dict(color ="w", linewidth = 5), markerprops=dict(mec="w",mfc="k"))
+
+    def onselect(self,verts):
+        self.canvas.draw_idle()
+        return(verts)
 
     
 

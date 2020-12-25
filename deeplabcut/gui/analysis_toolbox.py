@@ -48,7 +48,7 @@ class MainFrame(wx.Frame):
         self.gui_size = (screenWidth*0.7, screenHeight*0.85)
 
         wx.Frame.__init__(self, parent, id=wx.ID_ANY, title='DeepNeuroBoun - Labeling ToolBox',
-                          size=wx.Size(self.gui_size), pos=wx.DefaultPosition, style=wx.RESIZE_BORDER | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
+                            size=wx.Size(self.gui_size), pos=wx.DefaultPosition, style=wx.RESIZE_BORDER | wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
         self.statusbar = self.CreateStatusBar()
         self.statusbar.SetStatusText(
             "First, push the crop button and select the interested area with mouse...")
@@ -90,7 +90,9 @@ class MainFrame(wx.Frame):
         self.ok = wx.Button(self.widget_panel, id=wx.ID_ANY, label="OK")
         self.quit = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Quit")
         self.crop = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Crop")
-
+        self.region = wx.Button(self.widget_panel, id= wx.ID_ANY, label = "New Region")
+        
+    
         # Flags
         flags_all = wx.SizerFlags(1)
         flags_all.Border(wx.ALL, 10)
@@ -98,17 +100,21 @@ class MainFrame(wx.Frame):
         # Alignment and Locations
         widgetsizer.Add(self.ok, flags_all)
         widgetsizer.Add(self.crop, flags_all)
+        widgetsizer.Add(self.region,flags_all)
         widgetsizer.AddStretchSpacer(10)
         widgetsizer.Add(self.quit, flags_all)
-
         # Function Binding
         self.quit.Bind(wx.EVT_BUTTON, self.quitButton)
         self.ok.Bind(wx.EVT_BUTTON, self.okButton)
         self.crop.Bind(wx.EVT_BUTTON, self.crop_button)
-
+        self.region.Bind(wx.EVT_BUTTON, self.which_region)
         self.widget_panel.SetSizer(widgetsizer)
         self.widget_panel.SetSizerAndFit(widgetsizer)
         self.widget_panel.Layout()
+
+
+
+
 
 ###############################################################################################################################
 # Variables initialization
@@ -122,12 +128,19 @@ class MainFrame(wx.Frame):
         self.filelist = filelist
         self.new_labels = False
         self.drs = []
+        self.user_regions = [ ]
         self.view_locked = False
         self.crop_btn_change = 0
         self.paradigm = paradigm
         self.cfg = read_config(self.config_file, is_paradigm=True)
         self.choice_panel.addCheckButtons(
             self.paradigm, self.image_panel, self.img_size, self.cfg)
+
+        if self.choice_panel == "Free": # this is temporary, will add custom ROI to all paradigms
+            self.choice_panel.rectangle.Bind(wx.EVT_BUTTON, self.select_polygon)
+            self.choice_panel.square.Bind(wx.EVT_BUTTON, self.select_polygon)
+            self.choice_panel.circle.Bind(wx.EVT_BUTTON, self.select_polygon)
+            self.choice_panel.other.Bind(wx.EVT_BUTTON, self.select_polygon)
     
     def _get_images_h5(self, file_list):
         analysis_files = []
@@ -195,9 +208,25 @@ class MainFrame(wx.Frame):
             self.cur_crop = (x1, x2, y1, y2)
             # needs generating patches for the new image
             self.choice_panel.generate_patches(self.img_size)
-
-
-
+    
+    def which_region(self,event):
+        self.choice_panel.square.Enable(True)
+        self.choice_panel.rectangle.Enable(True)
+        self.choice_panel.circle.Enable(True)
+        self.choice_panel.other.Enable(True)
+        self.StatusBar.SetStatusText("Please select which polygon you want to use for region selection.")
+    def select_polygon(self,event):
+        self.current_pol = event.GetEventObject().GetLabelText()
+        self.choice_panel.square.Enable(False)
+        self.choice_panel.rectangle.Enable(False)
+        self.choice_panel.circle.Enable(False)
+        self.choice_panel.other.Enable(False)
+        self.StatusBar.SetStatusText("Now pick the vertices")
+        self.region_draw(self.current_pol)
+    
+    def region_draw(self,current_pol):
+        if current_pol == "other":
+            self.image_panel.start_select()
 
 def show(config, paradigm, files=[], parent=None):
     frame = MainFrame(parent, config, paradigm, files).Show()

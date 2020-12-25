@@ -11,5 +11,8 @@ def paradigm_selector(parent, paradigm):
     elif paradigm == "EPM":
         from .epm_panel import EPM
         return EPM(parent)
+    elif paradigm == "Free":
+        from .free_panel import Free
+        return Free(parent)
     return None
 
