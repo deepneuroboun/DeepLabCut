@@ -3,9 +3,11 @@ import wx.lib.agw.aui as aui
 
 import matplotlib as mpl
 import matplotlib.image as mpimg
-from matplotlib.widgets import RectangleSelector, PolygonSelector
+from matplotlib.widgets import RectangleSelector, PolygonSelector, EllipseSelector
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.path import Path
+import matplotlib.pyplot as plt
+import numpy as np
 
 class Plot(wx.Panel):
 
@@ -30,6 +32,7 @@ class Plot(wx.Panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.canvas, 1, wx.EXPAND)
         self.SetSizer(sizer)
+        self.customregionplots = {}
     
     def _line_select_callback(self, eclick, erelease):
         """
@@ -73,39 +76,45 @@ class Plot(wx.Panel):
         return self._axes
     
     
-    def start_select(self):
-        self.poly = PolygonSelector(self._axes, self.onselect, \
+    def poly_start_select(self):
+        self.roi = PolygonSelector(self._axes, self.poly_onselect,
             lineprops= dict(color ="w", linewidth = 5), markerprops=dict(mec="w",mfc="k"))
 
-    def onselect(self,verts):
-        self.canvas.draw_idle()
-        return(verts)
-
+    def poly_onselect(self,verts):
+        self.canvas.draw()
+        self.cur_vertices = verts
+    
+    def rect_start_select(self):
+        self.roi = RectangleSelector(self._axes, self.rect_onselect,drawtype= 'box', interactive= True, spancoords='pixels',
+             lineprops= dict(color ="w", linewidth = 8), rectprops= dict(edgecolor = 'white', fill = False, ))
     
 
-class PlotNotebook(wx.Panel):
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
-        self.nb = aui.AuiNotebook(self)
-        sizer = wx.BoxSizer()
-        sizer.Add(self.nb, 1, wx.EXPAND)
-        self.SetSizer(sizer)
+    def rect_onselect(self,eclick,erelease):
+        self.canvas.draw()
+        self.cur_vertices = self.roi.geometry
+    
+    def ellipse_start_select(self):
+        self.roi = EllipseSelector(self._axes, self.ellipse_onselect, drawtype= 'line', interactive= True, spancoords='pixels',
+             lineprops= dict(color ="w", linewidth = 8), rectprops= dict(edgecolor = 'white', fill = False, ))
+    
+    def ellipse_onselect(self,eclick,erelease):
+        self.canvas.draw()
+        self.cur_vertices = self.roi.geometry
+    
+    def draw_ROI(self, vertex_coor,roi_name):
+        
+        if self.current_pol == "Other":
+            draw = [list(item) for item in vertex_coor]
+            draw.append(vertex_coor[0])
+        
+        elif self.current_pol == "Rectangle":
+            draw = [list(reversed(list(vertex_coor[:,item]))) for item in range(np.shape(vertex_coor)[1])]
+        
+        elif self.current_pol == "Ellipse":
+            draw = [list(vertex_coor[:,item]) for item in range(np.shape(vertex_coor)[1])]
 
-    def add(self, name='plot', img=None):
-        page = Plot(self.nb, img=img)
-        self.nb.AddPage(page, name)
-        return page.figure
 
-
-def demo():
-    app = wx.App()
-    frame = wx.Frame(None, -1, 'Plotter')
-    plotter = PlotNotebook(frame)
-    image_source = ".\\media\\dlc_1-01.png"
-    img = mpimg.imread(image_source)
-    fig = plotter.add('figure 1', img)
-    frame.Show()
-    app.MainLoop()
-
-if __name__ == '__main__':
-    demo()
+        xs, ys = zip(*draw)
+        self.customregionplots[roi_name] = self._axes.plot(xs,ys,"w",linewidth = 5)
+        self.canvas.draw()
+        self.roi.set_visible(False)

@@ -80,6 +80,7 @@ class MainFrame(wx.Frame):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(topSplitter, 1, wx.EXPAND)
         self.SetSizer(sizer)
+        self.paradigm = paradigm
 
 ###################################################################################################################################################
 # Add Buttons to the WidgetPanel and bind them to their respective functions.
@@ -87,10 +88,11 @@ class MainFrame(wx.Frame):
         widgetsizer = wx.WrapSizer(orient=wx.HORIZONTAL, flags=wx.EXPAND)
 
         # Buttons
-        self.ok = wx.Button(self.widget_panel, id=wx.ID_ANY, label="OK")
+        self.ok = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Analyse")
         self.quit = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Quit")
         self.crop = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Crop")
-        self.region = wx.Button(self.widget_panel, id= wx.ID_ANY, label = "New Region")
+        self.region = wx.Button(self.widget_panel, id= wx.ID_ANY, label = "Define New Region")
+        self.help = wx.Button(self.widget_panel, id = wx.ID_ANY, label = "Help")
         
     
         # Flags
@@ -98,10 +100,11 @@ class MainFrame(wx.Frame):
         flags_all.Border(wx.ALL, 10)
 
         # Alignment and Locations
-        widgetsizer.Add(self.ok, flags_all)
+        widgetsizer.Add(self.help, flags_all)
         widgetsizer.Add(self.crop, flags_all)
         widgetsizer.Add(self.region,flags_all)
         widgetsizer.AddStretchSpacer(10)
+        widgetsizer.Add(self.ok, flags_all)
         widgetsizer.Add(self.quit, flags_all)
         # Function Binding
         self.quit.Bind(wx.EVT_BUTTON, self.quitButton)
@@ -128,7 +131,6 @@ class MainFrame(wx.Frame):
         self.filelist = filelist
         self.new_labels = False
         self.drs = []
-        self.user_regions = [ ]
         self.view_locked = False
         self.crop_btn_change = 0
         self.paradigm = paradigm
@@ -136,12 +138,17 @@ class MainFrame(wx.Frame):
         self.choice_panel.addCheckButtons(
             self.paradigm, self.image_panel, self.img_size, self.cfg)
 
-        if self.choice_panel == "Free": # this is temporary, will add custom ROI to all paradigms
-            self.choice_panel.rectangle.Bind(wx.EVT_BUTTON, self.select_polygon)
-            self.choice_panel.square.Bind(wx.EVT_BUTTON, self.select_polygon)
-            self.choice_panel.circle.Bind(wx.EVT_BUTTON, self.select_polygon)
-            self.choice_panel.other.Bind(wx.EVT_BUTTON, self.select_polygon)
-    
+        self.choice_panel.Rectangle.Bind(wx.EVT_BUTTON, self.select_polygon)
+        self.choice_panel.Ellipse.Bind(wx.EVT_BUTTON, self.select_polygon)
+        self.choice_panel.Other.Bind(wx.EVT_BUTTON, self.select_polygon)
+        self.choice_panel.roi_done.Bind(wx.EVT_BUTTON, self.accept_ROI)
+        self.choice_panel.remove_roi.Bind(wx.EVT_BUTTON, self.delete_region)
+        self.choice_panel.regions.Bind(wx.EVT_COMBOBOX, self.show_region_choice) 
+        self.help.Bind(wx.EVT_BUTTON, self.choice_panel.help)
+
+
+        self.choice_panel.Layout()
+
     def _get_images_h5(self, file_list):
         analysis_files = []
         img_files = []
@@ -210,23 +217,100 @@ class MainFrame(wx.Frame):
             self.choice_panel.generate_patches(self.img_size)
     
     def which_region(self,event):
-        self.choice_panel.square.Enable(True)
-        self.choice_panel.rectangle.Enable(True)
-        self.choice_panel.circle.Enable(True)
-        self.choice_panel.other.Enable(True)
+        
+        """ Enables polygon buttons for user selection"""
+
+        self.choice_panel.Rectangle.Enable(True)
+        self.choice_panel.Ellipse.Enable(True)
+        self.choice_panel.Other.Enable(True)
         self.StatusBar.SetStatusText("Please select which polygon you want to use for region selection.")
+    
     def select_polygon(self,event):
-        self.current_pol = event.GetEventObject().GetLabelText()
-        self.choice_panel.square.Enable(False)
-        self.choice_panel.rectangle.Enable(False)
-        self.choice_panel.circle.Enable(False)
-        self.choice_panel.other.Enable(False)
+
+        """ Allows user to draw/drag on the canvas depending on the polygon they picked."""
+
+        self.image_panel.current_pol = event.GetEventObject().GetLabelText()
+        self.choice_panel.Rectangle.Enable(False)
+        self.choice_panel.Ellipse.Enable(False)
+        self.choice_panel.Other.Enable(False)
         self.StatusBar.SetStatusText("Now pick the vertices")
-        self.region_draw(self.current_pol)
+        self.region_draw(self.image_panel.current_pol)
     
     def region_draw(self,current_pol):
-        if current_pol == "other":
-            self.image_panel.start_select()
+
+        """ Draws the picked region"""
+
+        if self.image_panel.current_pol == "Other":
+            self.image_panel.poly_start_select()
+        elif self.image_panel.current_pol == "Rectangle":
+            self.image_panel.rect_start_select()
+        elif self.image_panel.current_pol == "Ellipse":
+            self.image_panel.ellipse_start_select()
+        
+
+        self.choice_panel.roi_done.Enable(True)
+    
+    def accept_ROI(self,event):
+
+        """Asks user to name the region, and adds it to the analysis list"""
+
+        keep_asking = True
+        while keep_asking:
+            self.roi_input = wx.TextEntryDialog(self, 'Please enter the region name:',"ROI","", 
+                    style=wx.OK)
+            
+            self.roi_input.ShowModal()
+            if self.roi_input.GetValue() in self.choice_panel.user_regions:
+                wx.MessageBox(self,'That name is used! Please pick another name', 'Error', wx.OK | wx.ICON_INFORMATION)
+            else:
+                keep_asking = False
+        
+        self.choice_panel.user_regions[self.roi_input.GetValue()] = self.image_panel.cur_vertices
+        self.image_panel.cur_region_name = self.roi_input.GetValue()
+        self.choice_panel.regions.Append(self.roi_input.GetValue())
+        self.choice_panel.remove_roi.Enable(True)
+        self.roi_input.Destroy()
+        self.choice_panel.Rectangle.Enable(False)
+        self.choice_panel.Ellipse.Enable(False)
+        self.choice_panel.Other.Enable(False)
+        self.choice_panel.roi_done.Enable(False)
+
+        self.image_panel.draw_ROI(self.image_panel.cur_vertices,self.image_panel.cur_region_name)
+    
+    def delete_region(self,event):
+
+        msg = wx.MessageDialog(None,"Are you sure you want to delete {}".format(self.choice_panel.regions.GetValue()), "Quit!",wx.YES_NO | wx.ICON_WARNING)
+        
+        if msg.ShowModal() == wx.ID_YES:
+
+            self.choice_panel.user_regions.pop(self.choice_panel.regions.GetValue())
+            to_rm =self.image_panel.customregionplots.get(self.choice_panel.regions.GetValue()).pop(0)
+            to_rm.remove()
+            self.image_panel.customregionplots.pop(self.choice_panel.regions.GetValue())
+            self.image_panel.canvas.draw_idle()
+            self.choice_panel.regions.Delete(self.choice_panel.regions.GetSelection())
+            self.choice_panel.regions.SetValue("")
+        
+        if self.choice_panel.regions.GetItems() == []:
+
+            self.choice_panel.remove_roi.Enable(False)
+    
+    def show_region_choice(self,event):
+        try:
+            self.tmp_plot.set_color('w')
+        except:
+            pass
+        self.tmp_plot, = (self.image_panel.customregionplots.get(self.choice_panel.regions.GetValue()))
+        self.tmp_plot.set_color('r')
+        self.image_panel.canvas.draw_idle()
+
+        
+        
+
+
+        
+
+
 
 def show(config, paradigm, files=[], parent=None):
     frame = MainFrame(parent, config, paradigm, files).Show()
