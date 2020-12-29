@@ -55,16 +55,6 @@ def in_region(region, target):
             return False
     return True
 
-def cm_pix_ratio(cfg):
-    height = cfg['height']
-    width = cfg['width']
-    x1= cfg['x1']
-    x2= cfg['x2']
-    y1= cfg['y1']
-    y2= cfg['y2']
-    height_ratio= height/(y2-y1)
-    width_ratio = width/(x2-x1)
-    return height_ratio,width_ratio
 
 
 def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffix='.png'):
@@ -135,19 +125,18 @@ def FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options, suffi
 
 
 
-def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures, options, suffix='.png'):
+def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures, options, ratio = 1, suffix='.png'):
     FieldPlots(tmpfolder, Dataframe, scorer, cfg, bodyparts2plot, options)
     ''' Plots poses vs time; pose x vs pose y; histogram of differences and likelihoods.'''
     plt.figure(figsize=(8, 6))
     pcutoff = cfg['pcutoff']
     colors = get_cmap(len(bodyparts2plot),name = cfg['colormap'])
     alphavalue = cfg['alphavalue']
-    height_ratio,width_ratio = cm_pix_ratio(cfg)
 
 
     for bpindex, bp in enumerate(bodyparts2plot):
         Index=Dataframe[scorer][bp]['likelihood'].values > pcutoff
-        plt.plot((Dataframe[scorer][bp]['x'].values[Index])*width_ratio,(Dataframe[scorer][bp]['y'].values[Index])*height_ratio,'.',color=colors(bpindex),alpha=alphavalue)
+        plt.plot((Dataframe[scorer][bp]['x'].values[Index])*ratio,(Dataframe[scorer][bp]['y'].values[Index])*ratio,'.',color=colors(bpindex),alpha=alphavalue)
 
     plt.gca().invert_yaxis()
 
@@ -163,8 +152,8 @@ def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures,
 
     for bpindex, bp in enumerate(bodyparts2plot):
         Index=Dataframe[scorer][bp]['likelihood'].values > pcutoff
-        plt.plot(Time[Index],(Dataframe[scorer][bp]['x'].values[Index])*width_ratio,'--',color=colors(bpindex),alpha=alphavalue)
-        plt.plot(Time[Index],(Dataframe[scorer][bp]['y'].values[Index])*height_ratio,'-',color=colors(bpindex),alpha=alphavalue)
+        plt.plot(Time[Index],(Dataframe[scorer][bp]['x'].values[Index])*ratio,'--',color=colors(bpindex),alpha=alphavalue)
+        plt.plot(Time[Index],(Dataframe[scorer][bp]['y'].values[Index])*ratio,'-',color=colors(bpindex),alpha=alphavalue)
 
     sm = plt.cm.ScalarMappable(cmap=plt.get_cmap(cfg['colormap']), norm=plt.Normalize(vmin=0, vmax=len(bodyparts2plot)-1))
     sm._A = []
@@ -218,7 +207,7 @@ def PlottingResults(tmpfolder,Dataframe,scorer,cfg, bodyparts2plot, showfigures,
 ##################################################
 
 def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trainingsetindex=0, filtered=False,
-                      displayedbodyparts='all', showfigures=False, destfolder=None, crop=None):
+                      displayedbodyparts='all', showfigures=False, destfolder=None, crop=None, ratio= 1):
     """
     Plots the trajectories of various bodyparts across the video.
 
@@ -289,7 +278,7 @@ def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trai
             auxiliaryfunctions.attempttomakefolder(os.path.join(basefolder,'plot-poses'))
             tmpfolder = os.path.join(basefolder,'plot-poses', vname)
             auxiliaryfunctions.attempttomakefolder(tmpfolder)
-            PlottingResults(tmpfolder, Dataframe, DLCscorer, cfg, bodyparts, showfigures, options, suffix+'.png')
+            PlottingResults(tmpfolder, Dataframe, DLCscorer, cfg, bodyparts, showfigures, options, ratio = ratio, suffix+'.png')
     return 'Plots created! Please check the directory "plot-poses" within the video directory'
 
 

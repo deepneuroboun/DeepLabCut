@@ -111,3 +111,4 @@ ENV/
 # Session
 Session.vim
 .vscode/settings.json
+gitkraken-amd64.deb

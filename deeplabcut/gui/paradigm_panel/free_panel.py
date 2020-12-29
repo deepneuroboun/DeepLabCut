@@ -9,6 +9,7 @@ class Free(SP.ScrolledPanel):
     def __init__(self, parent):
         SP.ScrolledPanel.__init__(self, parent, -1, style=wx.SUNKEN_BORDER)
         self.SetupScrolling(scroll_x=True, scroll_y=True, scrollToTop=False)
+        self.user_regions = {}
         self.Layout()
 
 
@@ -20,7 +21,7 @@ class Free(SP.ScrolledPanel):
         self.figure = image_panel.figure
         self.img_size = img_size
         self.cfg = cfg
-        self.user_regions = {}
+        
         
 
         self.choiceBox = wx.BoxSizer(wx.VERTICAL)

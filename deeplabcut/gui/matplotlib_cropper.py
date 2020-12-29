@@ -6,7 +6,6 @@ import matplotlib.image as mpimg
 from matplotlib.widgets import RectangleSelector, PolygonSelector, EllipseSelector
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.path import Path
-import matplotlib.pyplot as plt
 import numpy as np
 
 class Plot(wx.Panel):

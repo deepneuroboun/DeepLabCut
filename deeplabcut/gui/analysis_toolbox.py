@@ -14,13 +14,13 @@ import cv2
 import wx
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib
 from deeplabcut.utils.auxiliaryfunctions import read_config
 from deeplabcut.utils.plotting import plot_trajectories
 from .matplotlib_cropper import Plot
 from .paradigm_panel.panel import paradigm_selector
+import math
 
 # ###########################################################################
 # Class for GUI MainFrame
@@ -93,7 +93,7 @@ class MainFrame(wx.Frame):
         self.crop = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Crop")
         self.region = wx.Button(self.widget_panel, id= wx.ID_ANY, label = "Define New Region")
         self.help = wx.Button(self.widget_panel, id = wx.ID_ANY, label = "Help")
-        
+        self.px2cm = wx.Button(self.widget_panel, id = wx.ID_ANY, label = "Pixel to Cm Conversion")        
     
         # Flags
         flags_all = wx.SizerFlags(1)
@@ -103,6 +103,7 @@ class MainFrame(wx.Frame):
         widgetsizer.Add(self.help, flags_all)
         widgetsizer.Add(self.crop, flags_all)
         widgetsizer.Add(self.region,flags_all)
+        widgetsizer.Add(self.px2cm, flags_all)
         widgetsizer.AddStretchSpacer(10)
         widgetsizer.Add(self.ok, flags_all)
         widgetsizer.Add(self.quit, flags_all)
@@ -111,6 +112,7 @@ class MainFrame(wx.Frame):
         self.ok.Bind(wx.EVT_BUTTON, self.okButton)
         self.crop.Bind(wx.EVT_BUTTON, self.crop_button)
         self.region.Bind(wx.EVT_BUTTON, self.which_region)
+        self.px2cm.Bind(wx.EVT_BUTTON, self.get_ratio)
         self.widget_panel.SetSizer(widgetsizer)
         self.widget_panel.SetSizerAndFit(widgetsizer)
         self.widget_panel.Layout()
@@ -132,8 +134,10 @@ class MainFrame(wx.Frame):
         self.new_labels = False
         self.drs = []
         self.view_locked = False
+        self.redefine = False
         self.crop_btn_change = 0
         self.paradigm = paradigm
+        self.coords = []
         self.cfg = read_config(self.config_file, is_paradigm=True)
         self.choice_panel.addCheckButtons(
             self.paradigm, self.image_panel, self.img_size, self.cfg)
@@ -177,7 +181,7 @@ class MainFrame(wx.Frame):
 # BUTTONS FUNCTIONS FOR HOTKEYS
     def okButton(self, event):
         res = plot_trajectories(
-            self.config_file, self.filelist, self.cfg['options'], videotype='.MP4', crop=self.cur_crop)
+            self.config_file, self.filelist, self.cfg['options'], videotype='.MP4', crop=self.cur_crop, ratio = self.ratio)
         # plot_thread = Thread(target=plotting.plot_trajectories,
         #         args=(self.config_file, self.filelist, self.options),
         #         kwargs={'videotype': '.MP4'})
@@ -303,7 +307,36 @@ class MainFrame(wx.Frame):
         self.tmp_plot, = (self.image_panel.customregionplots.get(self.choice_panel.regions.GetValue()))
         self.tmp_plot.set_color('r')
         self.image_panel.canvas.draw_idle()
+    
+    def ask_cm_and_compute(self,event):
 
+        ix,iy = event.xdata, event.ydata
+
+        self.coords.append([ix,iy])
+
+        if len(self.coords) == 2:
+
+            self.image_panel.canvas.mpl_disconnect(self.cid)
+            
+            cm_dlg = wx.TextEntryDialog(self,"Please enter the distance between points in cm","Enter Distance",style=wx.OK)
+            cm_dlg.ShowModal()
+            self.cm = int(cm_dlg.GetValue())
+            cm_dlg.Destroy()
+
+            self.ratio = self.cm/(math.sqrt(abs(((self.coords[0][0] - self.coords[1][0]) ** 2) + ((self.coords[0][1] - self.coords[1][1]) ** 2))))
+            self.px2cm.SetLabel("Redefine the Ratio")
+            self.redefine = True
+
+        
+    def get_ratio(self,event):
+
+        if self.redefine:
+
+            self.coords.clear()
+            self.redefine = False
+
+        self.cid = self.image_panel.canvas.mpl_connect('button_press_event',self.ask_cm_and_compute)
+        
         
         
 
