@@ -93,7 +93,8 @@ class MainFrame(wx.Frame):
         self.crop = wx.Button(self.widget_panel, id=wx.ID_ANY, label="Crop")
         self.region = wx.Button(self.widget_panel, id= wx.ID_ANY, label = "Define New Region")
         self.help = wx.Button(self.widget_panel, id = wx.ID_ANY, label = "Help")
-        self.px2cm = wx.Button(self.widget_panel, id = wx.ID_ANY, label = "Pixel to Cm Conversion")        
+        self.px2cm = wx.Button(self.widget_panel, id = wx.ID_ANY, label = "Pixel to Cm Conversion") 
+        self.ratiotxt = wx.StaticText(self.widget_panel, label ="")       
     
         # Flags
         flags_all = wx.SizerFlags(1)
@@ -104,6 +105,7 @@ class MainFrame(wx.Frame):
         widgetsizer.Add(self.crop, flags_all)
         widgetsizer.Add(self.region,flags_all)
         widgetsizer.Add(self.px2cm, flags_all)
+        widgetsizer.Add(self.ratiotxt, flags_all)
         widgetsizer.AddStretchSpacer(10)
         widgetsizer.Add(self.ok, flags_all)
         widgetsizer.Add(self.quit, flags_all)
@@ -326,6 +328,9 @@ class MainFrame(wx.Frame):
             self.ratio = self.cm/(math.sqrt(abs(((self.coords[0][0] - self.coords[1][0]) ** 2) + ((self.coords[0][1] - self.coords[1][1]) ** 2))))
             self.px2cm.SetLabel("Redefine the Ratio")
             self.redefine = True
+            self.ratiotxt.SetLabel("Cm to Pixel Ratio is {}".format(self.ratio))
+            #self.widget_panel.Layout()
+
 
         
     def get_ratio(self,event):

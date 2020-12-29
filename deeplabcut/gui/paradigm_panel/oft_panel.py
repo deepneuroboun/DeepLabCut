@@ -23,6 +23,7 @@ class OFT(SP.ScrolledPanel):
         center_label = 'Center'
         self.choiceBox = wx.BoxSizer(wx.VERTICAL)
 
+        self.defaulttxt = wx.StaticText(self, label = "Predefined Region Selection")
         self.quartile = wx.CheckBox(self, id=wx.ID_ANY, label='Quartile')
         self.center = wx.CheckBox(self, id=wx.ID_ANY, label=center_label)
         self.scaler = fs.FloatSpin(self, -1, size=(250, -1), value=1, min_val=0.3, max_val=1.5,
@@ -30,12 +31,49 @@ class OFT(SP.ScrolledPanel):
         scaler_text = wx.StaticText(self, label="Adjust the " + center_label + " size")
         self.re_center = wx.Button(
             self, id=wx.ID_ANY, label="Reset " + center_label + " to default")
+        self.choiceBox.Add(self.defaulttxt, 0 , wx.ALL, 5)
         self.choiceBox.Add(self.quartile, 0, wx.ALL, 5)
         self.choiceBox.Add(self.center, 0, wx.ALL, 5)
         self.choiceBox.Add(scaler_text, 0, wx.ALL, 5)
         self.choiceBox.Add(self.scaler, 0, wx.ALL, 5)
         self.choiceBox.Add(self.re_center, 0, wx.ALL, 5)
+        self.target_rs = image_panel.add_rs()
+        self.target_rs_on = 0
+        self.choiceBox.AddStretchSpacer(3)
 
+        buttons = ["Rectangle","Ellipse","Other"]
+        for elem in buttons:
+            setattr(self,elem,wx.Button(self,label = elem))
+        self.roi_txt = wx.StaticText(self, label ="Pick Region Type")
+        self.choiceBox.Add(self.roi_txt, flag = wx.ALL, border = 10)
+        self.Rectangle.Enable(False)
+        self.choiceBox.Add(self.Rectangle, flag = wx.ALL, border = 10)
+        self.Ellipse.Enable(False)
+        self.choiceBox.Add(self.Ellipse, flag = wx.ALL, border = 10)
+        self.Other.Enable(False) 
+        self.choiceBox.Add(self.Other, flag = wx.ALL, border = 10)
+        self.roi_done = wx.Button(self, label = 'Done')
+        self.choiceBox.Add(self.roi_done, flag = wx.ALL, border = 10)
+        self.roi_done.Enable(False)
+
+        self.choiceBox.AddStretchSpacer(3)
+        self.all_roi_list = wx.StaticText(self, label = "Selected Custom Regions")
+        self.choiceBox.Add(self.all_roi_list, flag = wx.ALL, border = 10)
+        self.regions = wx.ComboBox(self,wx.ID_ANY,choices = [], style=wx.CB_DROPDOWN | wx.CB_DROPDOWN)
+        self.choiceBox.Add(self.regions, flag = wx.ALL, border = 10)
+        self.remove_roi = wx.Button(self, label = "Remove Region")
+        self.remove_roi.Enable(False)
+        self.choiceBox.Add(self.remove_roi, flag = wx.ALL, border = 10)
+
+        self.choiceBox.AddStretchSpacer(3)
+        self.analysis_text = wx.StaticText(self, label = "Analyses")
+        self.choiceBox.Add(self.analysis_text, flag = wx.ALL, border = 10)
+        self.regioncheck = wx.CheckBox(self, label = "Region")
+        self.choiceBox.Add(self.regioncheck, flag = wx.ALL, border = 10)
+        self.speedcheck = wx.CheckBox(self, label = "Speed")
+        self.choiceBox.Add(self.speedcheck, flag = wx.ALL, border = 10)
+        self.positioncheck = wx.CheckBox(self, label = "Position")
+        self.choiceBox.Add(self.positioncheck, flag = wx.ALL, border = 10)
 
         self.SetSizerAndFit(self.choiceBox)
         self.Layout()
@@ -75,6 +113,8 @@ class OFT(SP.ScrolledPanel):
         self.rect = PatchCollection(quadrants, match_original=True)
         regions = self.cfg['options']['vector-based'].keys()
         # TODO: needs dynamic x and y positions for labels
+        x = [150, 450, 450, 150]
+        y = [150, 150, 450, 450]
 
         for region in zip(x,y,regions):
             x, y, label = region
@@ -157,3 +197,16 @@ class OFT(SP.ScrolledPanel):
         self.create_center()
         self.axes.add_patch(self.central_rect)
         self.figure.canvas.draw()
+
+    def help(self,event):
+        wx.MessageBox("Here you can define custom regions and choose some default analyses. \n\n"\
+            "If you are defining a rectangle, you need to hold and drag over the region you want to define.\n"\
+            "Pressing shift while drawing a rectangle gives a square.\n\n"\
+            "If you are defining an ellipse, you need to hold and drag over the region you want to define.\n"\
+            "Pressing shift while drawing an ellipse gives a circle.\n\n"\
+            "If you choose the other option, you can define a custom polygon by clicking on the where you want the vertices to be.\n"\
+            "You need to connect the last vertex point to the first one.\n\n"\
+            "You can restart drawing after pressing esc. "\
+            "After drawing the region, you can move it around. "\
+            "To move the custom polygon around you need to press shift and hold.\n\n"\
+            "If you want to delete a region after naming it, select it under Custom Selected Regions, and click on Remove Region.",'Info', wx.OK | wx.ICON_INFORMATION)

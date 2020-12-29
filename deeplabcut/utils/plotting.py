@@ -278,7 +278,7 @@ def plot_trajectories(config, videos, options, videotype='.avi', shuffle=1, trai
             auxiliaryfunctions.attempttomakefolder(os.path.join(basefolder,'plot-poses'))
             tmpfolder = os.path.join(basefolder,'plot-poses', vname)
             auxiliaryfunctions.attempttomakefolder(tmpfolder)
-            PlottingResults(tmpfolder, Dataframe, DLCscorer, cfg, bodyparts, showfigures, options, ratio = ratio, suffix+'.png')
+            PlottingResults(tmpfolder, Dataframe, DLCscorer, cfg, bodyparts, showfigures, options, suffix+'.png', ratio = ratio)
     return 'Plots created! Please check the directory "plot-poses" within the video directory'
 
 
