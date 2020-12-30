@@ -81,6 +81,7 @@ class MainFrame(wx.Frame):
         sizer.Add(topSplitter, 1, wx.EXPAND)
         self.SetSizer(sizer)
         self.paradigm = paradigm
+        self.show_p = []
 
 ###################################################################################################################################################
 # Add Buttons to the WidgetPanel and bind them to their respective functions.
@@ -285,7 +286,7 @@ class MainFrame(wx.Frame):
     
     def delete_region(self,event):
 
-        msg = wx.MessageDialog(None,"Are you sure you want to delete {}".format(self.choice_panel.regions.GetValue()), "Quit!",wx.YES_NO | wx.ICON_WARNING)
+        msg = wx.MessageDialog(None,"Are you sure you want to delete {}".format(self.choice_panel.regions.GetValue()), "Remove Region?",wx.YES_NO | wx.ICON_WARNING)
         
         if msg.ShowModal() == wx.ID_YES:
 
@@ -316,20 +317,37 @@ class MainFrame(wx.Frame):
 
         self.coords.append([ix,iy])
 
+        self.show_p.append(self.image_panel._axes.plot(ix,iy,'ro'))
+        self.image_panel.canvas.draw()
+
         if len(self.coords) == 2:
 
+            keep_asking = True
             self.image_panel.canvas.mpl_disconnect(self.cid)
             
-            cm_dlg = wx.TextEntryDialog(self,"Please enter the distance between points in cm","Enter Distance",style=wx.OK)
-            cm_dlg.ShowModal()
-            self.cm = int(cm_dlg.GetValue())
-            cm_dlg.Destroy()
+            while keep_asking:
+                cm_dlg = wx.TextEntryDialog(self,"Please enter the distance between points in cm","Enter Distance",style=wx.OK)
+                cm_dlg.ShowModal()
 
+                try:
+                    self.cm = int(cm_dlg.GetValue())
+
+                    if self.cm >0:
+                        keep_asking = False
+                    else:
+                        wx.MessageBox("Please enter a number bigger than zero","Error", wx.OK | wx.ICON_INFORMATION)
+                except:
+                    wx.MessageBox('Please enter a number', 'Error', wx.OK | wx.ICON_INFORMATION)
+                
+            cm_dlg.Destroy()
             self.ratio = self.cm/(math.sqrt(abs(((self.coords[0][0] - self.coords[1][0]) ** 2) + ((self.coords[0][1] - self.coords[1][1]) ** 2))))
             self.px2cm.SetLabel("Redefine the Ratio")
             self.redefine = True
             self.ratiotxt.SetLabel("Cm to Pixel Ratio is {}".format(self.ratio))
-            #self.widget_panel.Layout()
+            for item in self.show_p:
+                item[0].remove()
+            self.show_p.clear()
+            self.image_panel.canvas.draw_idle()
 
 
         
