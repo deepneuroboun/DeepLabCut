@@ -1,0 +1,58 @@
+    # Project definitions (do not edit)
+Task: OFT_v3
+scorer: can
+date: Oct21
+multianimalproject:
+
+    # Project path (change when moving around)
+project_path: /home/ornitorenkperry/DeepLabCut/paradigms/Free
+
+    # Annotation data set configuration (and individual video cropping parameters)
+video_sets:
+  videos/OFT_1_train.MP4: #relative paths
+    crop: 0, 1280, 0, 720
+  videos/OFT_2_train.MP4:
+    crop: 0, 1280, 0, 720
+bodyparts:
+- head
+- torso
+- tail
+start: 0
+stop: 1
+numframes2pick: 20
+
+    # Plotting configuration
+skeleton:
+- - head
+  - torso
+  - tail
+skeleton_color: black
+pcutoff: 0.1
+dotsize: 12
+alphavalue: 0.7
+colormap: jet
+
+    # Training,Evaluation and Analysis configuration
+TrainingFraction:
+- 0.95
+iteration: 0
+default_net_type: resnet_50
+default_augmenter: default
+snapshotindex: -1
+batch_size: 8
+
+    # Cropping Parameters (for analysis and outlier frame detection)
+cropping: false
+croppedtraining:
+    #if cropping is true for analysis, then set the values here:
+x1: 0
+x2: 640
+y1: 277
+y2: 624
+
+    # Refinement configuration (parameters from annotation dataset configuration also relevant in this stage)
+corner2move2:
+- 50
+- 50
+move2corner: true
+resnet:

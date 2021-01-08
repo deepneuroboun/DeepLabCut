@@ -9,6 +9,7 @@ class OFT(SP.ScrolledPanel):
     def __init__(self, parent):
         SP.ScrolledPanel.__init__(self, parent, -1, style=wx.SUNKEN_BORDER)
         self.SetupScrolling(scroll_x=True, scroll_y=True, scrollToTop=False)
+        self.user_regions = {}
         self.Layout()
 
 
